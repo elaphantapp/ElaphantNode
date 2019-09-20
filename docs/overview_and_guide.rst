@@ -89,7 +89,11 @@ Extra feature configure::
         "ApiKey":["5c8bcab7-a811-428d-9c2b-3f0326de4f66","237bd580-3c68-42f8-b9e8-fd201c4933ac"],
         // update schedule period, `m` stand for minutes
         "Inteval":"15m"
-      }
+      },
+      // Whether or not earn node reward , if set to false , your node will not receive transaction reward
+      "EarnReward":true,
+      // How many utxo we bundle together to create multi-transaction
+      "BundleUtxoSize":700
     }
 
 
