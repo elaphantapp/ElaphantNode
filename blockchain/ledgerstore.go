@@ -5,6 +5,7 @@ import (
 	. "github.com/elastos/Elastos.ELA/blockchain"
 	"github.com/elastos/Elastos.ELA/common"
 	. "github.com/elastos/Elastos.ELA/core/types"
+	"sync"
 )
 
 var DefaultChainStoreEx IChainStoreExtend
@@ -20,4 +21,5 @@ type IChainStoreExtend interface {
 	GetPublicKey(addr string) string
 	GetDposReward(addr string) (*common.Fixed64, error)
 	GetDposRewardByHeight(addr string, height uint32) (*common.Fixed64, error)
+	GetDposLock() *sync.Mutex
 }

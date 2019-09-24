@@ -2101,6 +2101,9 @@ func GetCmcPrice(param Params) map[string]interface{} {
 }
 
 func ProducerStatistic(param Params) map[string]interface{} {
+	var dposLock = blockchain2.DefaultChainStoreEx.GetDposLock()
+	dposLock.Lock()
+	defer dposLock.Unlock()
 	pub, ok := param["producer"].(string)
 	if !ok || pub == "" || len(pub) != 66 {
 		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, " invalid public key ")
@@ -2135,6 +2138,9 @@ func ProducerStatistic(param Params) map[string]interface{} {
 }
 
 func VoterStatistic(param Params) map[string]interface{} {
+	var dposLock = blockchain2.DefaultChainStoreEx.GetDposLock()
+	dposLock.Lock()
+	defer dposLock.Unlock()
 	addr, ok := param["addr"].(string)
 	if !ok || addr == "" || len(addr) != 34 {
 		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, " invalid address ")
@@ -2272,6 +2278,9 @@ order by value * 100000000  desc) m`, types.Vote_info{})
 
 //
 func ProducerRankByHeight(param Params) map[string]interface{} {
+	var dposLock = blockchain2.DefaultChainStoreEx.GetDposLock()
+	dposLock.Lock()
+	defer dposLock.Unlock()
 	height, ok := param["height"].(string)
 	if !ok {
 		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "invalid height")
@@ -2346,6 +2355,9 @@ order by value * 100000000  desc) m `, types.Vote_info{})
 }
 
 func TotalVoteByHeight(param Params) map[string]interface{} {
+	var dposLock = blockchain2.DefaultChainStoreEx.GetDposLock()
+	dposLock.Lock()
+	defer dposLock.Unlock()
 	height, ok := param["height"].(string)
 	if !ok {
 		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "invalid height")
@@ -2363,6 +2375,9 @@ func TotalVoteByHeight(param Params) map[string]interface{} {
 }
 
 func GetProducerByTxs(param Params) map[string]interface{} {
+	var dposLock = blockchain2.DefaultChainStoreEx.GetDposLock()
+	dposLock.Lock()
+	defer dposLock.Unlock()
 	txids, ok := param["txid"].([]interface{})
 	if !ok {
 		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Can not find txid")
