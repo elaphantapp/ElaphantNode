@@ -103,7 +103,7 @@ Run the node::
 
     $ sudo apt-get install build-essential
     $ make
-    $ ./elephant
+    $ ./elaphant
 
 Nginx config Example::
 
