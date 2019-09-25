@@ -183,8 +183,6 @@ func (c ChainStoreExtend) initTask() {
 
 func (c *ChainStoreExtend) renewProducer() {
 	if DefaultChainStoreEx.GetHeight() >= 290000 {
-		c.mu.Lock()
-		defer c.mu.Unlock()
 		var err error
 		db, err := DBA.Begin()
 		defer func() {
@@ -233,8 +231,6 @@ func (c *ChainStoreExtend) renewProducer() {
 }
 
 func (c *ChainStoreExtend) renewCmcPrice() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if *i == len(common2.Conf.Cmc.ApiKey)-1 {
 		*i = 0
 	} else {

@@ -89,6 +89,8 @@ func (c *ChainStoreExtend) Close() {
 }
 
 func (c *ChainStoreExtend) processVote(block *Block, voteTxHolder *map[string]TxType) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if block.Height >= DPOS_CHECK_POINT {
 		db, err := DBA.Begin()
 		if err != nil {
@@ -448,14 +450,12 @@ func (c *ChainStoreExtend) loop() {
 			now := time.Now()
 			switch kind := t.(type) {
 			case *Block:
-				c.mu.Lock()
 				err := c.persistTxHistory(kind)
 				if err != nil {
 					log.Errorf("Error persist transaction history %s", err.Error())
 				}
 				tcall := float64(time.Now().Sub(now)) / float64(time.Second)
 				log.Debugf("handle SaveHistory time cost: %g num transactions:%d", tcall, len(kind.Transactions))
-				c.mu.Unlock()
 			}
 		case closed := <-c.quitEx:
 			closed <- true
@@ -602,6 +602,10 @@ func (c *ChainStoreExtend) GetStoredHeightExt(height uint32) (bool, error) {
 	return true, nil
 }
 
-func (c *ChainStoreExtend) GetDposLock() *sync.Mutex {
-	return &c.mu
+func (c *ChainStoreExtend) LockDposData() {
+	c.mu.Lock()
+}
+
+func (c *ChainStoreExtend) UnlockDposData() {
+	c.mu.Unlock()
 }
