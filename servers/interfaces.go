@@ -1810,6 +1810,8 @@ func CreateTx(param Params) map[string]interface{} {
 				utxoOutputsDetail := make(map[string]interface{})
 				utxoOutputsDetail["address"] = output["addr"]
 				if !hasGiveLeftMoney && currTxSum >= leftMoney+int64(config.Parameters.PowConfiguration.MinTxFee) {
+					utxoOutputsDetail["amount"] = currTxSum - int64(config.Parameters.PowConfiguration.MinTxFee) - leftMoney
+					utxoOutputsArray = append(utxoOutputsArray, utxoOutputsDetail)
 					if leftMoney > 0 {
 						utxoOutputsDetailLeft := make(map[string]interface{})
 						utxoOutputsDetailLeft["address"] = inputs[0]
@@ -1817,11 +1819,10 @@ func CreateTx(param Params) map[string]interface{} {
 						utxoOutputsArray = append(utxoOutputsArray, utxoOutputsDetailLeft)
 					}
 					hasGiveLeftMoney = true
-					utxoOutputsDetail["amount"] = currTxSum - int64(config.Parameters.PowConfiguration.MinTxFee) - leftMoney
 				} else {
 					utxoOutputsDetail["amount"] = currTxSum - int64(config.Parameters.PowConfiguration.MinTxFee)
+					utxoOutputsArray = append(utxoOutputsArray, utxoOutputsDetail)
 				}
-				utxoOutputsArray = append(utxoOutputsArray, utxoOutputsDetail)
 			} else {
 				return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Only support single output")
 			}
