@@ -1845,7 +1845,7 @@ func CreateTx(param Params) map[string]interface{} {
 			var orgMsg string
 			for i, input := range utxoInputsArray {
 				orgMsg += input["txid"].(string) + "-" + strconv.Itoa(int(input["index"].(uint32)))
-				if i != len(utxoOutputsArray)-1 {
+				if i != len(utxoInputsArray)-1 {
 					orgMsg += ";"
 				}
 			}
@@ -2064,7 +2064,7 @@ func CreateVoteTx(param Params) map[string]interface{} {
 			var orgMsg string
 			for i, input := range utxoInputsArray {
 				orgMsg += input["txid"].(string) + "-" + strconv.Itoa(int(input["index"].(uint32)))
-				if i != len(utxoOutputsArray)-1 {
+				if i != len(utxoInputsArray)-1 {
 					orgMsg += ";"
 				}
 			}
