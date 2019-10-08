@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	blockchain2 "github.com/elastos/Elastos.ELA.Elephant.Node/blockchain"
 	common2 "github.com/elastos/Elastos.ELA.Elephant.Node/common"
@@ -1843,12 +1842,25 @@ func CreateTx(param Params) map[string]interface{} {
 			} else {
 				txListMap["Fee"] = config.Parameters.PowConfiguration.MinTxFee
 			}
-
-			msg, err := json.Marshal(&txListMap)
-			if err != nil {
-				return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, err.Error())
+			var orgMsg string
+			for i, input := range utxoInputsArray {
+				orgMsg += input["txid"].(string) + "-" + strconv.Itoa(int(input["index"].(uint32)))
+				if i != len(utxoOutputsArray)-1 {
+					orgMsg += ";"
+				}
 			}
-			signature, err := crypto.Sign(NodePrivKey, msg)
+			orgMsg += "&"
+			for i, output := range utxoOutputsArray {
+				orgMsg += output["address"].(string) + "-" + strconv.Itoa(int(output["amount"].(int64)))
+				if i != len(utxoOutputsArray)-1 {
+					orgMsg += ";"
+				}
+			}
+			orgMsg += "&"
+			orgMsg += strconv.Itoa(txListMap["Fee"].(int))
+
+			log.Debugf("Curr Origin msg %s", orgMsg)
+			signature, err := crypto.Sign(NodePrivKey, []byte(orgMsg))
 			if err != nil {
 				return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, err.Error())
 			}
@@ -2049,11 +2061,26 @@ func CreateVoteTx(param Params) map[string]interface{} {
 				txListMap["Fee"] = config.Parameters.PowConfiguration.MinTxFee
 			}
 
-			msg, err := json.Marshal(&txListMap)
-			if err != nil {
-				return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, err.Error())
+			var orgMsg string
+			for i, input := range utxoInputsArray {
+				orgMsg += input["txid"].(string) + "-" + strconv.Itoa(int(input["index"].(uint32)))
+				if i != len(utxoOutputsArray)-1 {
+					orgMsg += ";"
+				}
 			}
-			signature, err := crypto.Sign(NodePrivKey, msg)
+			orgMsg += "&"
+			for i, output := range utxoOutputsArray {
+				orgMsg += output["address"].(string) + "-" + strconv.Itoa(int(output["amount"].(int64)))
+				if i != len(utxoOutputsArray)-1 {
+					orgMsg += ";"
+				}
+			}
+			orgMsg += "&"
+			orgMsg += strconv.Itoa(txListMap["Fee"].(int))
+
+			log.Debugf("Curr Origin msg %s", orgMsg)
+
+			signature, err := crypto.Sign(NodePrivKey, []byte(orgMsg))
 			if err != nil {
 				return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, err.Error())
 			}
