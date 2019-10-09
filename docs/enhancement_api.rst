@@ -1351,6 +1351,7 @@ Calculate UTXO that is about to spend
                 "Transactions": [
                     {
                         "Fee": 100,
+                        "Total_Node_Fee": 4800,
                         "Outputs": [
                             {
                                 "address": "EN8A9xHUNCJ9XEtaVFWa8xsrxewH88fMUf",

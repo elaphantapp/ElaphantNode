@@ -1842,6 +1842,7 @@ func CreateTx(param Params) map[string]interface{} {
 			} else {
 				txListMap["Fee"] = config.Parameters.PowConfiguration.MinTxFee
 			}
+			txListMap["Total_Node_Fee"] = config.Parameters.PowConfiguration.MinTxFee
 			var orgMsg string
 			for i, input := range utxoInputsArray {
 				orgMsg += input["txid"].(string) + "-" + strconv.Itoa(int(input["index"].(uint32)))
@@ -2060,7 +2061,7 @@ func CreateVoteTx(param Params) map[string]interface{} {
 			} else {
 				txListMap["Fee"] = config.Parameters.PowConfiguration.MinTxFee
 			}
-
+			txListMap["Total_Node_Fee"] = config.Parameters.PowConfiguration.MinTxFee
 			var orgMsg string
 			for i, input := range utxoInputsArray {
 				orgMsg += input["txid"].(string) + "-" + strconv.Itoa(int(input["index"].(uint32)))
