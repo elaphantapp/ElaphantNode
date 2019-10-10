@@ -1871,7 +1871,7 @@ func CreateTx(param Params) map[string]interface{} {
 			if config.Parameters.PowConfiguration.MinTxFee > 100 && common2.Conf.EarnReward {
 				utxoOutputsDetail := make(map[string]interface{})
 				utxoOutputsDetail["address"] = config.Parameters.PowConfiguration.PayToAddr
-				utxoOutputsDetail["amount"] = config.Parameters.PowConfiguration.MinTxFee - 100
+				utxoOutputsDetail["amount"] = int64(config.Parameters.PowConfiguration.MinTxFee - 100)
 				utxoOutputsArray = append(utxoOutputsArray, utxoOutputsDetail)
 			}
 			if !hasGiveLeftMoney {
@@ -1894,6 +1894,7 @@ func CreateTx(param Params) map[string]interface{} {
 			}
 			orgMsg += "&"
 			for i, output := range utxoOutputsArray {
+
 				orgMsg += output["address"].(string) + "-" + strconv.Itoa(int(output["amount"].(int64)))
 				if i != len(utxoOutputsArray)-1 {
 					orgMsg += ";"
@@ -2061,7 +2062,7 @@ func CreateVoteTx(param Params) map[string]interface{} {
 				utxoOutputsDetailReward := make(map[string]interface{})
 				if config.Parameters.PowConfiguration.MinTxFee > 100 && common2.Conf.EarnReward {
 					utxoOutputsDetailReward["address"] = config.Parameters.PowConfiguration.PayToAddr
-					utxoOutputsDetailReward["amount"] = config.Parameters.PowConfiguration.MinTxFee - 100
+					utxoOutputsDetailReward["amount"] = int64(config.Parameters.PowConfiguration.MinTxFee - 100)
 				}
 
 				output1 := outputs[1].(map[string]interface{})
@@ -2070,7 +2071,7 @@ func CreateVoteTx(param Params) map[string]interface{} {
 
 				if normalTransferAmtOver {
 					// first send address
-					utxoOutputsDetail["amount"] = 0
+					utxoOutputsDetail["amount"] = int64(0)
 
 					// owner address
 					utxoOutputsDetail1["amount"] = currTxSum - int64(config.Parameters.PowConfiguration.MinTxFee)
@@ -2088,7 +2089,7 @@ func CreateVoteTx(param Params) map[string]interface{} {
 						normalTransferLeft -= currTxSum - int64(config.Parameters.PowConfiguration.MinTxFee)
 
 						// owner address
-						utxoOutputsDetail1["amount"] = 0
+						utxoOutputsDetail1["amount"] = int64(0)
 					}
 				}
 				utxoOutputsArray = append(utxoOutputsArray, utxoOutputsDetail)
