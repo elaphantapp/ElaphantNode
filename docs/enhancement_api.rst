@@ -1838,3 +1838,74 @@ summary of all spend utxo value
             "result": 1066042996951,
             "status": 200
       }
+
+get transaction
+-----------------------------------------
+return transaction if it exists in transaction pool or confirmed on a block
+
+.. http:get:: /api/v1/tx/(string:`hash`)
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      get /api/v1/tx/90151759b2ce3bf87970a0b3e2aa2456ad61ee27a60a02089758d6061e7af74a HTTP/1.1
+      Host: localhost
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+        {
+          "txid": "90151759b2ce3bf87970a0b3e2aa2456ad61ee27a60a02089758d6061e7af74a",
+          "hash": "90151759b2ce3bf87970a0b3e2aa2456ad61ee27a60a02089758d6061e7af74a",
+          "size": 369,
+          "vsize": 369,
+          "version": 0,
+          "locktime": 484501,
+          "vin": [
+            {
+              "txid": "8d85f0ef4cf0097fd980fcfe81d0c5741a0276af586d9ded31089b7f3d79126e",
+              "vout": 0,
+              "sequence": 0
+            }
+          ],
+          "vout": [
+            {
+              "value": "0.00150000",
+              "n": 0,
+              "address": "EauXy6q4fPXr5THDxQ6MwnhMdDxF7tJUAA",
+              "assetid": "a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0",
+              "outputlock": 0,
+              "type": 0,
+              "payload": null
+            }
+          ],
+          "blockhash": "",
+          "confirmations": 0,
+          "time": 0,
+          "blocktime": 0,
+          "type": 5,
+          "payloadversion": 0,
+          "payload": {
+            "blockheight": 107567,
+            "sideblockhash": "21f40da0dcee3a568c8557ef03797fa5c4546bf52d4396823dba8f499c75915b",
+            "sidegenesishash": "0e739a2b87774ef2266a3cabc79a8e1201732fe409cfe50bd4125efb1d1169b5",
+            "signature": "f4f4327c98a735309544a37273d373bf9c879218022a51c809deb884fe881a3f683a79082c9418d09bc51b0634078c560b1d7b94166b17b933ff030b5c2d31ca"
+          },
+          "attributes": [
+            {
+              "usage": 0,
+              "data": "33383635333434373239393435313330363032"
+            }
+          ],
+          "programs": [
+            {
+              "code": "21021d2a6d4ec309609ebe27f8c138d14bb28da2634ca63cf6582cbf4b8a59f719bdac",
+              "parameter": "40e53759af1d0fd85d07195a636c538881c791db0e419d60ca90c03d9947aaba50fed5d27a75a8c40ad8c5073c5b73ac59ba046fa164741ec6c592a36cbbb7b44e"
+            }
+          ]
+        }

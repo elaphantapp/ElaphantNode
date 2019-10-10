@@ -1217,6 +1217,44 @@ func GetUnspendOutput(param Params) map[string]interface{} {
 	return ResponsePack(Success, UTXOoutputs)
 }
 
+func GetTx(param Params) map[string]interface{} {
+	str, ok := param.String("hash")
+	if !ok {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "")
+	}
+
+	bys, err := FromReversedString(str)
+	if err != nil {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "")
+	}
+
+	var hash common.Uint256
+	err = hash.Deserialize(bytes.NewReader(bys))
+	if err != nil {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "")
+	}
+	var header *Header
+	txn, height, err := Store.GetTransaction(hash)
+	if err != nil {
+		txn = TxMemPool.GetTransaction(hash)
+		if txn == nil {
+			return ResponsePackEx(ELEPHANT_SUCCESS,
+				"Unknown Transaction")
+		}
+	} else {
+		bHash, err := Store.GetBlockHash(height)
+		if err != nil {
+			return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, "")
+		}
+		header, err = Chain.GetHeader(bHash)
+		if err != nil {
+			return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, "")
+		}
+	}
+
+	return ResponsePackEx(ELEPHANT_SUCCESS, GetTransactionInfo(header, txn))
+}
+
 //Transaction
 func GetTransactionByHash(param Params) map[string]interface{} {
 	str, ok := param.String("hash")

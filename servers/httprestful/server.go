@@ -51,6 +51,7 @@ const (
 	ApiGetProducerByTxs     = "/api/v1/dpos/transaction/producer"
 	ApiNodeRewardAddr       = "/api/v1/node/reward/address"
 	ApiGetSpendUtxos        = "/api/v1/spend/utxos"
+	ApiGetTx                = "/api/v1/tx"
 )
 
 var ext_api_handle = map[string]bool{
@@ -70,6 +71,7 @@ var ext_api_handle = map[string]bool{
 	ApiGetProducerByTxs:     true,
 	ApiNodeRewardAddr:       true,
 	ApiGetSpendUtxos:        true,
+	ApiGetTx:                true,
 }
 
 type Action struct {
@@ -161,6 +163,7 @@ func (rt *restServer) initializeMethod() {
 		ApiProducerRankByHeight: {name: "producerRankByHeight", handler: servers.ProducerRankByHeight},
 		ApiTotalVoteByHeight:    {name: "totalVoteByHeight", handler: servers.TotalVoteByHeight},
 		ApiNodeRewardAddr:       {name: "nodeRewardAddr", handler: servers.NodeRewardAddr},
+		ApiGetTx:                {name: "gettx", handler: servers.GetTx},
 	}
 	postMethodMap := map[string]Action{
 		ApiSendRawTransaction: {name: "sendrawtransaction", handler: servers.SendRawTransaction},
@@ -212,6 +215,8 @@ func (rt *restServer) getPath(url string) string {
 		return ApiProducerRankByHeight
 	} else if strings.Contains(url, strings.TrimSuffix(ApiTotalVoteByHeight, ":height")) {
 		return ApiTotalVoteByHeight
+	} else if strings.Contains(url, strings.TrimSuffix(ApiGetTx, ":hash")) {
+		return ApiGetTx
 	}
 	return url
 }
@@ -291,7 +296,8 @@ func (rt *restServer) getParams(r *http.Request, url string, req map[string]inte
 	case ApiGetProducerByTxs:
 	case ApiNodeRewardAddr:
 	case ApiGetSpendUtxos:
-
+	case ApiGetTx:
+		req["hash"] = getParam(r, "hash")
 	}
 	return req
 }
