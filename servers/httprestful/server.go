@@ -51,7 +51,7 @@ const (
 	ApiGetProducerByTxs     = "/api/v1/dpos/transaction/producer"
 	ApiNodeRewardAddr       = "/api/v1/node/reward/address"
 	ApiGetSpendUtxos        = "/api/v1/spend/utxos"
-	ApiGetTx                = "/api/v1/tx"
+	ApiGetTx                = "/api/v1/tx/:hash"
 )
 
 var ext_api_handle = map[string]bool{

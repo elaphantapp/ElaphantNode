@@ -402,6 +402,22 @@ Nginx config Example::
             proxy_set_header X-Real-IP $remote_addr;
         }
 
+        location ~ ^/api/[v]?1/tx {
+            if ($request_method = OPTIONS ) {
+              add_header "Access-Control-Allow-Origin"  *;
+              add_header "Access-Control-Allow-Methods" "GET, POST, OPTIONS, HEAD";
+              add_header "Access-Control-Allow-Headers" "Authorization, Origin, X-Requested-With, Content-Type, Accept";
+              return 200;
+            }
+            proxy_pass http://localhost:20334;
+            proxy_connect_timeout 120s;
+            proxy_read_timeout 120s;
+            proxy_send_timeout 120s;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
         listen 443 ssl; # managed by Certbot
         ssl_certificate /etc/letsencrypt/live/exmaple.com/fullchain.pem; # managed by Certbot
         ssl_certificate_key /etc/letsencrypt/live/exmaple.com/privkey.pem; # managed by Certbot
