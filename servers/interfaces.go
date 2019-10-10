@@ -1807,10 +1807,10 @@ func CreateTx(param Params) map[string]interface{} {
 		for j, utxo := range utxos {
 			index = j
 			spendMoney += int64(utxo.Value)
-			if j%bundleUtxoSize == 0 {
-				multiTxNum = j / bundleUtxoSize
+			if (j+1)%bundleUtxoSize == 0 {
+				multiTxNum = (j + 1) / bundleUtxoSize
 			} else {
-				multiTxNum = j/bundleUtxoSize + 1
+				multiTxNum = (j+1)/bundleUtxoSize + 1
 			}
 			if spendMoney >= smAmt+int64(config.Parameters.PowConfiguration.MinTxFee*multiTxNum) {
 				hasEnoughFee = true
@@ -1954,10 +1954,10 @@ func CreateVoteTx(param Params) map[string]interface{} {
 		for m, utxo := range utxos {
 			total += int64(utxo.Value)
 			if m == len(utxos)-1 {
-				if m%bundleUtxoSize == 0 {
-					multiTxNum = m / bundleUtxoSize
+				if (m+1)%bundleUtxoSize == 0 {
+					multiTxNum = (m + 1) / bundleUtxoSize
 				} else {
-					multiTxNum = m/bundleUtxoSize + 1
+					multiTxNum = (m+1)/bundleUtxoSize + 1
 				}
 			}
 		}
