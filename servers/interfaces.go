@@ -2202,7 +2202,7 @@ func ProducerStatistic(param Params) map[string]interface{} {
 		Height              int64  `json:",omitempty"`
 	}
 
-	rst, err := blockchain2.DBA.ToStruct("select Producer_public_key,Vote_type,Txid,Value,Address,Block_time,Height from chain_vote_info where producer_public_key = '"+pub+"' and (outputlock = 0 or outputlock >= height) and is_valid = 'YES' and height <= "+strconv.Itoa(iHeight), ret{})
+	rst, err := blockchain2.DBA.ToStruct("select Producer_public_key,Vote_type,Txid,Value,Address,Block_time,Height from chain_vote_info where producer_public_key = '"+pub+"' and (outputlock = 0 or outputlock >= height) and (cancel_height > "+strconv.Itoa(iHeight)+" or cancel_height is null) and height <=  "+strconv.Itoa(iHeight), ret{})
 	if err != nil {
 		return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
 	}
