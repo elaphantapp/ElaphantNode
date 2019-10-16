@@ -2439,12 +2439,12 @@ func TotalVoteByHeight(param Params) map[string]interface{} {
 	if err != nil || h < 0 {
 		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "invalid height")
 	}
-	rst, err := blockchain2.DBA.ToFloat(`select  sum(value) as value from chain_producer_info b left join chain_vote_info a on a.producer_public_key = b.ownerpublickey  where (cancel_height > ` + height + ` or cancel_height is null) and height <= ` + height + ``)
+	rst, err := blockchain2.DBA.ToFloat(`select ifnull(ROUND(sum(value),8),0) as value from chain_producer_info b left join chain_vote_info a on a.producer_public_key = b.ownerpublickey  where (cancel_height > ` + height + ` or cancel_height is null) and height <= ` + height + ``)
 	if err != nil {
 		return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
 	}
 
-	return ResponsePackEx(ELEPHANT_SUCCESS, fmt.Sprintf("%.8f", rst))
+	return ResponsePackEx(ELEPHANT_SUCCESS,  rst)
 }
 
 func GetProducerByTxs(param Params) map[string]interface{} {
