@@ -2184,8 +2184,9 @@ func ProducerStatistic(param Params) map[string]interface{} {
 		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, " invalid public key ")
 	}
 	height, ok := param["height"].(string)
+	var iHeight int
 	if !ok {
-		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, " invalid height ")
+		iHeight = 99999999
 	}
 	iHeight, err := strconv.Atoi(height)
 	if err != nil {
