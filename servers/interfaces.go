@@ -1874,9 +1874,6 @@ func CreateTx(param Params) map[string]interface{} {
 				utxoOutputsDetail["amount"] = int64(config.Parameters.PowConfiguration.MinTxFee - 100)
 				utxoOutputsArray = append(utxoOutputsArray, utxoOutputsDetail)
 			}
-			if !hasGiveLeftMoney {
-				return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, "Not giving left money , logic error")
-			}
 			txListMap["UTXOInputs"] = utxoInputsArray
 			txListMap["Outputs"] = utxoOutputsArray
 			if common2.Conf.EarnReward {
@@ -1913,6 +1910,9 @@ func CreateTx(param Params) map[string]interface{} {
 			proof["signature"] = hex.EncodeToString(signature)
 			proof["pub"] = hex.EncodeToString(NodePubKey)
 			txList = append(txList, txListMap)
+		}
+		if !hasGiveLeftMoney {
+			return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, "Not giving left money , logic error")
 		}
 	}
 	paraListMap["Transactions"] = txList
