@@ -27,7 +27,6 @@ import:
   - leveldb/util
 - package: github.com/yuin/gopher-lua
 - package: github.com/golang/snappy
-- package: github.com/robfig/cron.git
 - package: gopkg.in/cheggaaa/pb.v1
 - package: github.com/robfig/cron
 - package: github.com/mattn/go-sqlite3

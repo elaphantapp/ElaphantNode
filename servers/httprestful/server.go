@@ -125,6 +125,7 @@ func (rt *restServer) Start() {
 			log.Fatal("net.Listen: ", err.Error())
 		}
 	}
+
 	rt.server = &http.Server{Handler: rt.router}
 	err := rt.server.Serve(rt.listener)
 

@@ -3,6 +3,8 @@ package httprestful
 import (
 	"context"
 	"errors"
+	"github.com/didip/tollbooth"
+	"github.com/elastos/Elastos.ELA/common/log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -104,8 +106,15 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	ctx := context.WithValue(req.Context(), "route_params", params)
-	handler(w, req.WithContext(ctx))
-
+	lmt := tollbooth.NewLimiter(5, nil)
+	lmt.SetIPLookups([]string{"RemoteAddr", "X-Forwarded-For", "X-Real-IP"})
+	lmt.SetMethods([]string{"GET", "POST", "OPTION"})
+	lmt.SetMessage(`{"result":"You have reached maximum request limit","status":400}`)
+	lmt.SetMessageContentType("application/json; charset=utf-8")
+	lmt.SetOnLimitReached(func(w http.ResponseWriter, r *http.Request) {
+		log.Warn("A request was rejected for reaching request limit")
+	})
+	tollbooth.LimitFuncHandler(lmt, handler).ServeHTTP(w, req.WithContext(ctx))
 }
 
 func parseParams(route *Route, path string) Params {
