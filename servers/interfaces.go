@@ -2444,7 +2444,7 @@ func TotalVoteByHeight(param Params) map[string]interface{} {
 		return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
 	}
 
-	return ResponsePackEx(ELEPHANT_SUCCESS,  rst)
+	return ResponsePackEx(ELEPHANT_SUCCESS, rst)
 }
 
 func GetProducerByTxs(param Params) map[string]interface{} {

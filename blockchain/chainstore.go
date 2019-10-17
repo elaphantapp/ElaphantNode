@@ -42,7 +42,7 @@ type ChainStoreExtend struct {
 	chain    *BlockChain
 	taskChEx chan interface{}
 	quitEx   chan chan bool
-	mu       sync.Mutex
+	mu       sync.RWMutex
 	*cron.Cron
 	rp         chan bool
 	checkPoint bool
@@ -74,7 +74,7 @@ func NewChainStoreEx(chain *BlockChain, chainstore IChainStore, filePath string)
 		taskChEx:    make(chan interface{}, 100),
 		quitEx:      make(chan chan bool, 1),
 		Cron:        cron.New(),
-		mu:          sync.Mutex{},
+		mu:          sync.RWMutex{},
 		rp:          make(chan bool, 1),
 		checkPoint:  true,
 	}
@@ -603,9 +603,9 @@ func (c *ChainStoreExtend) GetStoredHeightExt(height uint32) (bool, error) {
 }
 
 func (c *ChainStoreExtend) LockDposData() {
-	c.mu.Lock()
+	c.mu.RLock()
 }
 
 func (c *ChainStoreExtend) UnlockDposData() {
-	c.mu.Unlock()
+	c.mu.RUnlock()
 }
