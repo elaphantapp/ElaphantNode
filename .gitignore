@@ -9,5 +9,6 @@ nohup.out
 **/_static
 *.tar
 xxx
-elephant
+/elaphant
 config.json
+go.sum

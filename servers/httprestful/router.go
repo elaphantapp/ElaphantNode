@@ -106,7 +106,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	ctx := context.WithValue(req.Context(), "route_params", params)
-	lmt := tollbooth.NewLimiter(5, nil)
+	lmt := tollbooth.NewLimiter(1, nil)
 	lmt.SetIPLookups([]string{"RemoteAddr", "X-Forwarded-For", "X-Real-IP"})
 	lmt.SetMethods([]string{"GET", "POST", "OPTION"})
 	lmt.SetMessage(`{"result":"You have reached maximum request limit","status":400}`)
