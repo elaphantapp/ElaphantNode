@@ -150,6 +150,6 @@ func init() {
 	lmt.SetMessage(`{"result":"You have reached maximum request limit","status":400}`)
 	lmt.SetMessageContentType("application/json; charset=utf-8")
 	lmt.SetOnLimitReached(func(w http.ResponseWriter, r *http.Request) {
-		log.Warn("A request was rejected for reaching request limit")
+		log.Debugf("A request was rejected for reaching request limit , %s",r.URL.Path)
 	})
 }
