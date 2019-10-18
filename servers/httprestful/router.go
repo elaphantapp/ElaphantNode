@@ -4,14 +4,17 @@ import (
 	"context"
 	"errors"
 	"github.com/didip/tollbooth"
+	"github.com/didip/tollbooth/limiter"
 	"github.com/elastos/Elastos.ELA/common/log"
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 //https://github.com/emostafa/garson
 type Params map[string]string
+var lmt *limiter.Limiter
 
 type Route struct {
 	Method           string
@@ -106,14 +109,6 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	ctx := context.WithValue(req.Context(), "route_params", params)
-	lmt := tollbooth.NewLimiter(1, nil)
-	lmt.SetIPLookups([]string{"RemoteAddr", "X-Forwarded-For", "X-Real-IP"})
-	lmt.SetMethods([]string{"GET", "POST", "OPTION"})
-	lmt.SetMessage(`{"result":"You have reached maximum request limit","status":400}`)
-	lmt.SetMessageContentType("application/json; charset=utf-8")
-	lmt.SetOnLimitReached(func(w http.ResponseWriter, r *http.Request) {
-		log.Warn("A request was rejected for reaching request limit")
-	})
 	tollbooth.LimitFuncHandler(lmt, handler).ServeHTTP(w, req.WithContext(ctx))
 }
 
@@ -145,4 +140,16 @@ func getQueryParam(r *http.Request, param map[string]interface{}) {
 		a := strings.Split(v, "=")
 		param[a[0]] = a[1]
 	}
+}
+
+func init() {
+	lmt = tollbooth.NewLimiter(1, nil)
+	lmt.SetTokenBucketExpirationTTL(30 * time.Second)
+	lmt.SetIPLookups([]string{"RemoteAddr", "X-Forwarded-For", "X-Real-IP"})
+	lmt.SetMethods([]string{"GET", "POST", "OPTION"})
+	lmt.SetMessage(`{"result":"You have reached maximum request limit","status":400}`)
+	lmt.SetMessageContentType("application/json; charset=utf-8")
+	lmt.SetOnLimitReached(func(w http.ResponseWriter, r *http.Request) {
+		log.Warn("A request was rejected for reaching request limit")
+	})
 }
