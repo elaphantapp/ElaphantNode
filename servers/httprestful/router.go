@@ -14,6 +14,7 @@ import (
 
 //https://github.com/emostafa/garson
 type Params map[string]string
+
 var lmt *limiter.Limiter
 
 type Route struct {
@@ -150,6 +151,6 @@ func init() {
 	lmt.SetMessage(`{"result":"You have reached maximum request limit","status":400}`)
 	lmt.SetMessageContentType("application/json; charset=utf-8")
 	lmt.SetOnLimitReached(func(w http.ResponseWriter, r *http.Request) {
-		log.Debugf("A request was rejected for reaching request limit , %s",r.URL.Path)
+		log.Debugf("A request was rejected for reaching request limit , %s", r.URL.Path)
 	})
 }
