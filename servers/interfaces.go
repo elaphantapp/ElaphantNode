@@ -2243,6 +2243,8 @@ func VoterStatistic(param Params) map[string]interface{} {
 			num = 1
 		}
 		from = (num - 1) * size
+	} else {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, " must use pagination ")
 	}
 	sql = "select * from chain_vote_info where address = '" + addr + "' order by _id desc "
 	info, err := blockchain2.DBA.ToStruct(sql, types.Vote_info{})
