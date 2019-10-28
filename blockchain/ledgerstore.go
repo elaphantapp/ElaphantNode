@@ -14,8 +14,8 @@ type IChainStoreExtend interface {
 	persistTxHistory(block *Block) error
 	CloseEx()
 	AddTask(task interface{})
-	GetTxHistory(addr, order string) interface{}
-	GetTxHistoryByPage(addr, order string, pageNum, pageSize uint32) (interface{}, int)
+	GetTxHistory(addr, order, ver string) interface{}
+	GetTxHistoryByPage(addr, order, ver string, pageNum, pageSize uint32) (interface{}, int)
 	GetCmcPrice() types.Cmcs
 	GetPublicKey(addr string) string
 	GetDposReward(addr string) (*common.Fixed64, error)

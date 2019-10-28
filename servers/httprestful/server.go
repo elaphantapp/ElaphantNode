@@ -36,6 +36,7 @@ const (
 
 	//extended
 	ApiGetHistory                   = "/api/v1/history/:addr"
+	ApiGetHistory_v2                = "/api/v2/history/:addr"
 	ApiCreateTx                     = "/api/v1/createTx"
 	ApiCmc                          = "/api/v1/cmc"
 	ApiGetPublicKey                 = "/api/v1/pubkey/:addr"
@@ -156,6 +157,7 @@ func (rt *restServer) initializeMethod() {
 
 		// extended
 		ApiGetHistory:                   {name: "gethistory", handler: servers.GetHistory},
+		ApiGetHistory_v2:                {name: "gethistory_v2", handler: servers.GetHistory},
 		ApiCmc:                          {name: "cmc", handler: servers.GetCmcPrice},
 		ApiGetPublicKey:                 {name: "getpublickey", handler: servers.GetPublicKey},
 		ApiGetBalance:                   {name: "getbalance", handler: servers.GetBalance},
@@ -207,6 +209,8 @@ func (rt *restServer) getPath(url string) string {
 		return ApiGetAsset
 	} else if strings.Contains(url, strings.TrimRight(ApiGetHistory, ":addr")) {
 		return ApiGetHistory
+	} else if strings.Contains(url, strings.TrimRight(ApiGetHistory_v2, ":addr")) {
+		return ApiGetHistory_v2
 	} else if strings.Contains(url, strings.TrimRight(ApiGetPublicKey, ":addr")) {
 		return ApiGetPublicKey
 	} else if strings.Contains(url, strings.TrimRight(ApiGetBalance, ":addr")) {
@@ -273,6 +277,11 @@ func (rt *restServer) getParams(r *http.Request, url string, req map[string]inte
 
 	case ApiGetHistory:
 		req["addr"] = getParam(r, "addr")
+		req["version"] = "1"
+		getQueryParam(r, req)
+	case ApiGetHistory_v2:
+		req["addr"] = getParam(r, "addr")
+		req["version"] = "2"
 		getQueryParam(r, req)
 	case ApiGetPublicKey:
 		req["addr"] = getParam(r, "addr")
@@ -334,11 +343,13 @@ func (rt *restServer) initGetHandler() {
 			rt.response(w, resp)
 		})
 		k = strings.Replace(k, "/api/v1/", "/api/1/", 1)
+		k = strings.Replace(k, "/api/v2/", "/api/2/", 1)
 		rt.router.Get(k, func(w http.ResponseWriter, r *http.Request) {
 
 			var req = make(map[string]interface{})
 			var resp map[string]interface{}
 			r.URL.Path = strings.Replace(r.URL.Path, "/api/1/", "/api/v1/", 1)
+			r.URL.Path = strings.Replace(r.URL.Path, "/api/2/", "/api/v2/", 1)
 			url := rt.getPath(r.URL.Path)
 			if h, ok := rt.getMap[url]; ok {
 				req = rt.getParams(r, url, req)
@@ -387,6 +398,7 @@ func (rt *restServer) initPostHandler() {
 			rt.response(w, resp)
 		})
 		k = strings.Replace(k, "/api/v1/", "/api/1/", 1)
+		k = strings.Replace(k, "/api/v2/", "/api/2/", 1)
 		rt.router.Post(k, func(w http.ResponseWriter, r *http.Request) {
 
 			body, _ := ioutil.ReadAll(r.Body)
@@ -395,6 +407,7 @@ func (rt *restServer) initPostHandler() {
 			var req = make(map[string]interface{})
 			var resp map[string]interface{}
 			r.URL.Path = strings.Replace(r.URL.Path, "/api/1/", "/api/v1/", 1)
+			r.URL.Path = strings.Replace(r.URL.Path, "/api/2/", "/api/v2/", 1)
 			url := rt.getPath(r.URL.Path)
 			if h, ok := rt.postMap[url]; ok {
 				if err := json.Unmarshal(body, &req); err == nil {

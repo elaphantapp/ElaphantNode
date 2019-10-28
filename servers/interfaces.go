@@ -1687,8 +1687,9 @@ func GetHistory(param Params) map[string]interface{} {
 	}
 	ok = param.HasKey("pageNum")
 	ok1 := param.HasKey("pageSize")
+	ver, _ := param.String("version")
 	if !ok && !ok1 {
-		txhs := blockchain2.DefaultChainStoreEx.GetTxHistory(addr, order)
+		txhs := blockchain2.DefaultChainStoreEx.GetTxHistory(addr, order, ver)
 		var len int
 		switch txhs.(type) {
 		case types.TransactionHistorySorter:
@@ -1710,7 +1711,7 @@ func GetHistory(param Params) map[string]interface{} {
 		if !cool {
 			return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "")
 		}
-		txhs, total := blockchain2.DefaultChainStoreEx.GetTxHistoryByPage(addr, order, pageNum, pageSize)
+		txhs, total := blockchain2.DefaultChainStoreEx.GetTxHistoryByPage(addr, order, ver, pageNum, pageSize)
 		thr := types.ThResult{
 			History:  txhs,
 			TotalNum: total,

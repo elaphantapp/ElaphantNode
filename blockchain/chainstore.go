@@ -19,6 +19,7 @@ import (
 	"github.com/robfig/cron"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -527,7 +528,7 @@ func (c *ChainStoreExtend) loop() {
 	}
 }
 
-func (c *ChainStoreExtend) GetTxHistory(addr string, order string) interface{} {
+func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) interface{} {
 	key := new(bytes.Buffer)
 	key.WriteByte(byte(DataTxHistoryPrefix))
 	var txhs interface{}
@@ -560,7 +561,16 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string) interface{} {
 			txhd.Inputs = []string{txhd.Address}
 			txhd.Outputs = []string{txhd.Outputs[0]}
 		}
-		txhd.Fee = txhd.Fee + txhd.NodeFee
+		if vers == "2" {
+			nodeFee, err := strconv.ParseInt(txhd.NodeFee, 10, 64)
+			if err != nil {
+				return nil
+			}
+			txhd.Fee = txhd.Fee + uint64(nodeFee)
+		} else {
+			txhd.NodeFee = ""
+			txhd.NodeOutputIndex = ""
+		}
 		if order == "desc" {
 			txhs = append(txhs.(types.TransactionHistorySorterDesc), *txhd)
 		} else {
@@ -575,8 +585,8 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string) interface{} {
 	return txhs
 }
 
-func (c *ChainStoreExtend) GetTxHistoryByPage(addr, order string, pageNum, pageSize uint32) (interface{}, int) {
-	txhs := c.GetTxHistory(addr, order)
+func (c *ChainStoreExtend) GetTxHistoryByPage(addr, order, vers string, pageNum, pageSize uint32) (interface{}, int) {
+	txhs := c.GetTxHistory(addr, order, vers)
 	from := (pageNum - 1) * pageSize
 	if order == "desc" {
 		return txhs.(types.TransactionHistorySorterDesc).Filter(from, pageSize), len(txhs.(types.TransactionHistorySorterDesc))

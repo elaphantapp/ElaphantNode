@@ -8,6 +8,7 @@ import (
 	"github.com/elastos/Elastos.ELA/common"
 	. "github.com/elastos/Elastos.ELA/core/types"
 	"io"
+	"strconv"
 )
 
 var Vote TxType = 0x90
@@ -53,8 +54,8 @@ type TransactionHistoryDisplay struct {
 	Outputs         []string
 	TxType          string
 	Memo            string
-	NodeOutputIndex int64
-	NodeFee         uint64
+	NodeOutputIndex string `json:",omitempty"`
+	NodeFee         string `json:",omitempty"`
 }
 
 type ThResult struct {
@@ -217,18 +218,18 @@ func (th *TransactionHistory) Deserialize(r io.Reader) (*TransactionHistoryDispl
 
 	th.NodeOutputIndex, err = common.ReadUint64(r)
 	if err != nil {
-		txhd.NodeOutputIndex = -1
-		txhd.NodeFee = 0
+		txhd.NodeOutputIndex = "-1"
+		txhd.NodeFee = "0"
 		return txhd, nil
 	}
 	if th.NodeOutputIndex == 999999 {
-		txhd.NodeOutputIndex = -1
+		txhd.NodeOutputIndex = "-1"
 	} else {
-		txhd.NodeOutputIndex = int64(th.NodeOutputIndex)
+		txhd.NodeOutputIndex = strconv.Itoa(int(th.NodeOutputIndex))
 	}
 
 	th.NodeFee, err = common.ReadUint64(r)
-	txhd.NodeFee = th.NodeFee
+	txhd.NodeFee = strconv.Itoa(int(th.NodeFee))
 	if err != nil {
 		return txhd, errors.New("[TransactionHistory], NodeFee deserialize failed.")
 	}
