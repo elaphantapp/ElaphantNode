@@ -462,7 +462,11 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 					txh.Fee = realFee
 					txh.NodeFee = uint64(node_fee)
 					txh.NodeOutputIndex = uint64(node_output_index)
-					txh.Outputs = rto
+					if len(rto) > 10 {
+						txh.Outputs = rto[0:10]
+					}else{
+						txh.Outputs = rto
+					}
 					txh.Memo = memo
 					txhs = append(txhs, txh)
 				}
@@ -480,8 +484,8 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 					txh.Fee = uint64(fee)
 					txh.NodeFee = uint64(node_fee)
 					txh.NodeOutputIndex = uint64(node_output_index)
-					if len(to) > 3 {
-						txh.Outputs = to[0:3]
+					if len(to) > 10 {
+						txh.Outputs = to[0:10]
 					} else {
 						txh.Outputs = to
 					}
@@ -561,6 +565,10 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 			txhd.Inputs = []string{txhd.Address}
 			if vers != "2" {
 				txhd.Outputs = []string{txhd.Outputs[0]}
+			}else {
+				if len(txhd.Outputs) > 10 {
+					txhd.Outputs = txhd.Outputs[0:10]
+				}
 			}
 		}
 		if vers == "2" {
