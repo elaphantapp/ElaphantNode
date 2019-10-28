@@ -559,7 +559,9 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 			txhd.Outputs = []string{txhd.Address}
 		} else {
 			txhd.Inputs = []string{txhd.Address}
-			txhd.Outputs = []string{txhd.Outputs[0]}
+			if vers != "2" {
+				txhd.Outputs = []string{txhd.Outputs[0]}
+			}
 		}
 		if vers == "2" {
 			nodeFee, err := strconv.ParseInt(txhd.NodeFee, 10, 64)
