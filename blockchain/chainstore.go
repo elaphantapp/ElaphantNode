@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/common"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/core/types"
 	. "github.com/elastos/Elastos.ELA/blockchain"
@@ -13,6 +14,7 @@ import (
 	. "github.com/elastos/Elastos.ELA/core/types"
 	"github.com/elastos/Elastos.ELA/core/types/outputpayload"
 	"github.com/elastos/Elastos.ELA/core/types/payload"
+	"github.com/elastos/Elastos.ELA/crypto"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/robfig/cron"
 	"io"
@@ -249,8 +251,56 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 				return err
 			}
 			var memo []byte
-			if len(tx.Attributes) > 0 {
-				memo = tx.Attributes[0].Data
+			var signedAddress string
+			var node_fee common2.Fixed64
+			var node_output_index uint64 = 999999
+			for _, attr := range tx.Attributes {
+				if attr.Usage == Memo {
+					memo = attr.Data
+				}
+				if attr.Usage == Description {
+					am := make(map[string]interface{})
+					err = json.Unmarshal(attr.Data, &am)
+					if err == nil {
+						pm, ok := am["Postmark"]
+						if ok {
+							dpm, ok := pm.(map[string]interface{})
+							if ok {
+								msg, ok_msg := dpm["msg"].(string)
+								pub, ok_pub := dpm["pub"].(string)
+								sig, ok_sig := dpm["signature"].(string)
+								b_msg, ok_b_msg := hex.DecodeString(msg)
+								b_pub, ok_b_pub := hex.DecodeString(pub)
+								b_sig, ok_b_sig := hex.DecodeString(sig)
+								if ok_msg && ok_pub && ok_sig && ok_b_msg == nil && ok_b_pub == nil && ok_b_sig == nil {
+									var pubKey = new(crypto.PublicKey)
+									var buf = bytes.NewBuffer(b_pub)
+									err = pubKey.Deserialize(buf)
+									if err != nil {
+										log.Infof("Error deserialise pubkey from postmark data %s", hex.EncodeToString(attr.Data))
+										continue
+									}
+									err = crypto.Verify(*pubKey, b_msg, b_sig)
+									if err != nil {
+										log.Infof("Error verify postmark data %s", hex.EncodeToString(attr.Data))
+										continue
+									}
+									signedAddress, err = common.GetAddress(b_pub)
+									if err != nil {
+										log.Infof("Error Getting signed address from postmark %s", hex.EncodeToString(attr.Data))
+										continue
+									}
+								} else {
+									log.Infof("Invalid postmark data %s", hex.EncodeToString(attr.Data))
+									continue
+								}
+							} else {
+								log.Infof("Invalid postmark data %s", hex.EncodeToString(attr.Data))
+								continue
+							}
+						}
+					}
+				}
 			}
 			if tx.TxType == CoinBase {
 				var to []common2.Uint168
@@ -269,6 +319,8 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 						txh.Type = []byte(INCOME)
 						txh.Fee = 0
 						txh.Memo = memo
+						txh.NodeFee = 0
+						txh.NodeOutputIndex = uint64(node_output_index)
 						hold[vout.ProgramHash] = uint64(vout.Value)
 						txhscoinbase = append(txhscoinbase, txh)
 					} else {
@@ -327,7 +379,7 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 				receive := make(map[common2.Uint168]int64)
 				var totalOutput int64 = 0
 				vote := outputpayload.VoteOutput{}
-				for _, output := range tx.Outputs {
+				for i, output := range tx.Outputs {
 					outputPayload := output.Payload
 					if tx.TxType != types.Vote && outputPayload != nil && outputPayload.Validate() == nil {
 						var buf bytes.Buffer
@@ -361,6 +413,13 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 					}
 					if !common.ContainsU168(output.ProgramHash, to) {
 						to = append(to, output.ProgramHash)
+					}
+					if signedAddress != "" {
+						outputAddress, _ := output.ProgramHash.ToAddress()
+						if signedAddress == outputAddress {
+							node_fee = output.Value
+							node_output_index = uint64(i)
+						}
 					}
 				}
 				fee := totalInput - totalOutput
@@ -400,6 +459,8 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 					txh.CreateTime = uint64(block.Header.Timestamp)
 					txh.Type = []byte(transferType)
 					txh.Fee = realFee
+					txh.NodeFee = uint64(node_fee)
+					txh.NodeOutputIndex = uint64(node_output_index)
 					txh.Outputs = rto
 					txh.Memo = memo
 					txhs = append(txhs, txh)
@@ -416,6 +477,8 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 					txh.CreateTime = uint64(block.Header.Timestamp)
 					txh.Type = []byte(SPEND)
 					txh.Fee = uint64(fee)
+					txh.NodeFee = uint64(node_fee)
+					txh.NodeOutputIndex = uint64(node_output_index)
 					if len(to) > 3 {
 						txh.Outputs = to[0:3]
 					} else {
@@ -497,6 +560,7 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string) interface{} {
 			txhd.Inputs = []string{txhd.Address}
 			txhd.Outputs = []string{txhd.Outputs[0]}
 		}
+		txhd.Fee = txhd.Fee + txhd.NodeFee
 		if order == "desc" {
 			txhs = append(txhs.(types.TransactionHistorySorterDesc), *txhd)
 		} else {

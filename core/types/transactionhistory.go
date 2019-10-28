@@ -26,31 +26,35 @@ var TxTypeEnum = map[TxType]string{
 }
 
 type TransactionHistory struct {
-	Address    common.Uint168
-	Txid       common.Uint256
-	Type       []byte
-	Value      uint64
-	CreateTime uint64
-	Height     uint64
-	Fee        uint64
-	Inputs     []common.Uint168
-	Outputs    []common.Uint168
-	TxType     TxType
-	Memo       []byte
+	Address         common.Uint168
+	Txid            common.Uint256
+	Type            []byte
+	Value           uint64
+	CreateTime      uint64
+	Height          uint64
+	Fee             uint64
+	Inputs          []common.Uint168
+	Outputs         []common.Uint168
+	TxType          TxType
+	Memo            []byte
+	NodeOutputIndex uint64
+	NodeFee         uint64
 }
 
 type TransactionHistoryDisplay struct {
-	Address    string
-	Txid       string
-	Type       string
-	Value      uint64
-	CreateTime uint64
-	Height     uint64
-	Fee        uint64
-	Inputs     []string
-	Outputs    []string
-	TxType     string
-	Memo       string
+	Address         string
+	Txid            string
+	Type            string
+	Value           uint64
+	CreateTime      uint64
+	Height          uint64
+	Fee             uint64
+	Inputs          []string
+	Outputs         []string
+	TxType          string
+	Memo            string
+	NodeOutputIndex int64
+	NodeFee         uint64
 }
 
 type ThResult struct {
@@ -114,6 +118,14 @@ func (th *TransactionHistory) Serialize(w io.Writer) error {
 	err = common.WriteVarBytes(w, th.Memo)
 	if err != nil {
 		return errors.New("[TransactionHistory], Memo serialize failed.")
+	}
+	err = common.WriteUint64(w, th.NodeOutputIndex)
+	if err != nil {
+		return errors.New("[TransactionHistory], NodeOutputIndex serialize failed.")
+	}
+	err = common.WriteUint64(w, th.NodeFee)
+	if err != nil {
+		return errors.New("[TransactionHistory], NodeFee serialize failed.")
 	}
 	return nil
 }
@@ -201,6 +213,24 @@ func (th *TransactionHistory) Deserialize(r io.Reader) (*TransactionHistoryDispl
 	txhd.Memo = string(th.Memo)
 	if err != nil {
 		return txhd, errors.New("[TransactionHistory], Memo serialize failed.")
+	}
+
+	th.NodeOutputIndex, err = common.ReadUint64(r)
+	if err != nil {
+		txhd.NodeOutputIndex = -1
+		txhd.NodeFee = 0
+		return txhd, nil
+	}
+	if th.NodeOutputIndex == 999999 {
+		txhd.NodeOutputIndex = -1
+	} else {
+		txhd.NodeOutputIndex = int64(th.NodeOutputIndex)
+	}
+
+	th.NodeFee, err = common.ReadUint64(r)
+	txhd.NodeFee = th.NodeFee
+	if err != nil {
+		return txhd, errors.New("[TransactionHistory], NodeFee deserialize failed.")
 	}
 	return txhd, nil
 }
