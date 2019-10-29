@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/common"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/core/types"
 	. "github.com/elastos/Elastos.ELA/blockchain"
@@ -19,6 +20,7 @@ import (
 	"github.com/robfig/cron"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -254,6 +256,7 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 			var signedAddress string
 			var node_fee common2.Fixed64
 			var node_output_index uint64 = 999999
+
 			for _, attr := range tx.Attributes {
 				if attr.Usage == Memo {
 					memo = attr.Data
@@ -266,13 +269,31 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 						if ok {
 							dpm, ok := pm.(map[string]interface{})
 							if ok {
-								msg, ok_msg := dpm["msg"].(string)
+								var orgMsg string
+								for i, input := range tx.Inputs {
+									hash := input.Previous.TxID
+									orgMsg += common2.BytesToHexString(common2.BytesReverse(hash[:])) + "-" + strconv.Itoa(int(input.Previous.Index))
+									if i != len(tx.Inputs)-1 {
+										orgMsg += ";"
+									}
+								}
+								orgMsg += "&"
+								for i, output := range tx.Outputs {
+									address, _ := output.ProgramHash.ToAddress()
+									orgMsg += address + "-" + fmt.Sprintf("%d", output.Value)
+									if i != len(tx.Outputs)-1 {
+										orgMsg += ";"
+									}
+								}
+								orgMsg += "&"
+								orgMsg += fmt.Sprintf("%d", tx.Fee)
+								log.Debugf("origin debug %s ", orgMsg)
 								pub, ok_pub := dpm["pub"].(string)
 								sig, ok_sig := dpm["signature"].(string)
-								b_msg, ok_b_msg := hex.DecodeString(msg)
+								b_msg := []byte(orgMsg)
 								b_pub, ok_b_pub := hex.DecodeString(pub)
 								b_sig, ok_b_sig := hex.DecodeString(sig)
-								if ok_msg && ok_pub && ok_sig && ok_b_msg == nil && ok_b_pub == nil && ok_b_sig == nil {
+								if ok_pub && ok_sig && ok_b_pub == nil && ok_b_sig == nil {
 									var pubKey = new(crypto.PublicKey)
 									var buf = bytes.NewBuffer(b_pub)
 									err = pubKey.Deserialize(buf)
@@ -302,6 +323,7 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 					}
 				}
 			}
+
 			if tx.TxType == CoinBase {
 				var to []common2.Uint168
 				hold := make(map[common2.Uint168]uint64)
