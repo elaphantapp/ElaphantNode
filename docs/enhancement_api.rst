@@ -1066,9 +1066,9 @@ Get transaction history , version 1
 
 Get transaction history , version 2
 ------------------------------------------------
+Increase fields :  NodeOutputIndex (indicate which output is the node reward output ), NodeFee (Node reward fee)
 
-increase fields :  NodeOutputIndex (indicate which output is the node reward output ), NodeFee (Node reward fee)
-changed meaning :  Fee now is the total spending fee , contains the node reward fee
+Changed meaning :  Fee now is the total spending fee , contains the node reward fee
 
 .. http:get:: /api/v2/history/(string:`addr`)?pageSize=(int:`pageSize`)&pageNum=(int:`pageNum`)&order=asc
 
