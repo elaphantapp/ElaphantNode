@@ -765,10 +765,10 @@ total vote of specific height
         }
 
 
-Get transaction history
+Get transaction history , version 1
 ------------------------------------------------
 
-.. http:get:: /api/v1/history/(string:`addr`)?pageSize=(int:`pageSize`)&pageNum=(int:`pageNum`)
+.. http:get:: /api/v1/history/(string:`addr`)?pageSize=(int:`pageSize`)&pageNum=(int:`pageNum`)&order=asc
 
    **Example request**:
 
@@ -1064,16 +1064,19 @@ Get transaction history
           }
         }
 
+Get transaction history , version 2
+------------------------------------------------
 
-get transaction history with your desired order
+increase fields :  NodeOutputIndex (indicate which output is the node reward output ), NodeFee (Node reward fee)
+changed meaning :  Fee now is the total spending fee , contains the node reward fee
 
-.. http:get:: /api/v1/history/(string:`addr`)?order=desc
+.. http:get:: /api/v2/history/(string:`addr`)?pageSize=(int:`pageSize`)&pageNum=(int:`pageNum`)&order=asc
 
    **Example request**:
 
    .. sourcecode:: http
 
-      GET /api/v1/history/EM2wjL3jgNHDZtR1e266V269n5WH6sYbCf HTTP/1.1
+      GET /api/v2/history/ HTTP/1.1
       Host: localhost
 
    **Example response**:
@@ -1084,47 +1087,75 @@ get transaction history with your desired order
       Content-Type: application/json
 
         {
-            "result":{
-                "History":[
-                    {
-                        "Address":"EM2wjL3jgNHDZtR1e266V269n5WH6sYbCf",
-                        "Txid":"a962022bc4a295ab4683ab4079f03d1e5bdb9bfdf5dac9c4eea003d18af16fbd",
-                        "Type":"spend",
-                        "Value":50000000000,
-                        "CreateTime":1561557063,
-                        "Height":409201,
-                        "Fee":10000,
-                        "Inputs":[
-                            "EM2wjL3jgNHDZtR1e266V269n5WH6sYbCf"
-                        ],
-                        "Outputs":[
-                            "EUX2LMtHBV1Ni7nAXPhBdnudrUvddU2Ecv"
-                        ],
-                        "TxType":"TransferAsset",
-                        "Memo":""
-                    },
-                    {
-                        "Address":"EM2wjL3jgNHDZtR1e266V269n5WH6sYbCf",
-                        "Txid":"920954e00bd1e1d3f674703c9e31988940c4c326382e13a22323d6e5ea3c4c6c",
-                        "Type":"income",
-                        "Value":50000000000,
-                        "CreateTime":1533090125,
-                        "Height":159257,
-                        "Fee":0,
-                        "Inputs":[
-                            "8cTn9JAGXfqGgu8kVUaPBJXrhSjoJR9ymG"
-                        ],
-                        "Outputs":[
-                            "EM2wjL3jgNHDZtR1e266V269n5WH6sYbCf"
-                        ],
-                        "TxType":"TransferAsset",
-                        "Memo":""
-                    }
-                ],
-                "TotalNum":2
-            },
-            "status":200
+          "Desc":"Success",
+          "Error":0,
+          "Result":{
+              "History":[
+                  {
+                      "Address":"EHCGDgxxRTj4rTSmZESmVqDHfYPZZWPpFQ",
+                      "Txid":"d6cdabe9a26073c3d4c13d1963250883b3656ba572b7a3bc8f44418b84c0fa12",
+                      "Type":"income",
+                      "Value":175834086,
+                      "CreateTime":1544862227,
+                      "Height":181860,
+                      "Fee":0,
+                      "Inputs":[
+                          "0000000000000000000000000000000000"
+                      ],
+                      "Outputs":[
+                          "8ZNizBf4KhhPjeJRGpox6rPcHE5Np6tFx3",
+                          "EHCGDgxxRTj4rTSmZESmVqDHfYPZZWPpFQ"
+                      ],
+                      "TxType":"CoinBase",
+                      "Memo":"",
+                      "NodeOutputIndex": -1,
+                      "NodeFee": 0
+                  },
+                  {
+                      "Address":"EHCGDgxxRTj4rTSmZESmVqDHfYPZZWPpFQ",
+                      "Txid":"8989a93356ba6a514c3d6afcf27c67cd9d85eea78c045c945cf1ebafcdd9d099",
+                      "Type":"income",
+                      "Value":175834086,
+                      "CreateTime":1544862297,
+                      "Height":181861,
+                      "Fee":0,
+                      "Inputs":[
+                          "0000000000000000000000000000000000"
+                      ],
+                      "Outputs":[
+                          "8ZNizBf4KhhPjeJRGpox6rPcHE5Np6tFx3",
+                          "EHCGDgxxRTj4rTSmZESmVqDHfYPZZWPpFQ"
+                      ],
+                      "TxType":"CoinBase",
+                      "Memo":"",
+                      "NodeOutputIndex": -1,
+                      "NodeFee": 0
+                  },
+                  {
+                      "Address":"EHCGDgxxRTj4rTSmZESmVqDHfYPZZWPpFQ",
+                      "Txid":"097a00c466e62e1b3f59fd88f5b78b0473bb0008b94336f622e0a559b362dc2c",
+                      "Type":"income",
+                      "Value":175837586,
+                      "CreateTime":1544863648,
+                      "Height":181874,
+                      "Fee":0,
+                      "Inputs":[
+                          "0000000000000000000000000000000000"
+                      ],
+                      "Outputs":[
+                          "8ZNizBf4KhhPjeJRGpox6rPcHE5Np6tFx3",
+                          "EHCGDgxxRTj4rTSmZESmVqDHfYPZZWPpFQ"
+                      ],
+                      "TxType":"CoinBase",
+                      "Memo":"",
+                      "NodeOutputIndex": -1,
+                      "NodeFee": 0
+                  }
+              ],
+              "TotalNum":69180
+          }
         }
+
 
 Get spending address public key
 ------------------------------------------------
