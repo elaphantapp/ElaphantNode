@@ -19,7 +19,6 @@ import (
 	"github.com/robfig/cron"
 	"io"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -464,7 +463,7 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 					txh.NodeOutputIndex = uint64(node_output_index)
 					if len(rto) > 10 {
 						txh.Outputs = rto[0:10]
-					}else{
+					} else {
 						txh.Outputs = rto
 					}
 					txh.Memo = memo
@@ -565,21 +564,17 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 			txhd.Inputs = []string{txhd.Address}
 			if vers != "2" {
 				txhd.Outputs = []string{txhd.Outputs[0]}
-			}else {
+			} else {
 				if len(txhd.Outputs) > 10 {
 					txhd.Outputs = txhd.Outputs[0:10]
 				}
 			}
 		}
 		if vers == "2" {
-			nodeFee, err := strconv.ParseInt(txhd.NodeFee, 10, 64)
-			if err != nil {
-				return nil
-			}
-			txhd.Fee = txhd.Fee + uint64(nodeFee)
+			txhd.Fee = txhd.Fee + uint64(*txhd.NodeFee)
 		} else {
-			txhd.NodeFee = ""
-			txhd.NodeOutputIndex = ""
+			txhd.NodeFee = nil
+			txhd.NodeOutputIndex = nil
 		}
 		if order == "desc" {
 			txhs = append(txhs.(types.TransactionHistorySorterDesc), *txhd)
