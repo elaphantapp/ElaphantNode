@@ -294,9 +294,7 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 								b_pub, ok_b_pub := hex.DecodeString(pub)
 								b_sig, ok_b_sig := hex.DecodeString(sig)
 								if ok_pub && ok_sig && ok_b_pub == nil && ok_b_sig == nil {
-									var pubKey = new(crypto.PublicKey)
-									var buf = bytes.NewBuffer(b_pub)
-									err = pubKey.Deserialize(buf)
+									pubKey, err := crypto.DecodePoint(b_pub)
 									if err != nil {
 										log.Infof("Error deserialise pubkey from postmark data %s", hex.EncodeToString(attr.Data))
 										continue
