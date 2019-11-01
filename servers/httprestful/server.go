@@ -452,6 +452,7 @@ func (rt *restServer) response(w http.ResponseWriter, resp map[string]interface{
 		log.Fatal("HTTP Handle - json.Marshal: %v", err)
 		return
 	}
+	log.Debugf("Response : %s", string(data))
 	rt.write(w, data)
 }
 
