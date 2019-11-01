@@ -1814,13 +1814,8 @@ func CreateTx(param Params) map[string]interface{} {
 				multiTxNum = (j+1)/bundleUtxoSize + 1
 			}
 			if spendMoney >= smAmt+int64(config.Parameters.PowConfiguration.MinTxFee*multiTxNum) {
-				hasEnoughFee = true
 				break
 			}
-		}
-
-		if !hasEnoughFee {
-			return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Not Enough UTXO")
 		}
 
 		var hasGiveLeftMoney = false
@@ -1911,6 +1906,7 @@ func CreateTx(param Params) map[string]interface{} {
 			proof["signature"] = hex.EncodeToString(signature)
 			proof["pub"] = hex.EncodeToString(NodePubKey)
 			txList = append(txList, txListMap)
+			hasEnoughFee = true
 		}
 		if !hasGiveLeftMoney {
 			return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, "Not giving left money , logic error")
@@ -2018,13 +2014,8 @@ func CreateVoteTx(param Params) map[string]interface{} {
 			index = j
 			spendMoney += int64(utxo.Value)
 			if spendMoney >= smAmt+int64(config.Parameters.PowConfiguration.MinTxFee*multiTxNum) {
-				hasEnoughFee = true
 				break
 			}
-		}
-
-		if !hasEnoughFee {
-			return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Not Enough UTXO")
 		}
 
 		var normalTransferAmtOver = false
@@ -2137,7 +2128,7 @@ func CreateVoteTx(param Params) map[string]interface{} {
 			txListMap["Postmark"] = proof
 			proof["signature"] = hex.EncodeToString(signature)
 			proof["pub"] = hex.EncodeToString(NodePubKey)
-
+			hasEnoughFee = true
 			txList = append(txList, txListMap)
 		}
 
