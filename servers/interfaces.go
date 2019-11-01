@@ -1744,7 +1744,7 @@ func CreateTx(param Params) map[string]interface{} {
 	if !ok {
 		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Can not find inputs")
 	}
-	var utxoList [][]*blockchain.UTXO
+	var utxoList []types.Utxos
 	for _, v := range inputs {
 		input, ok := v.(string)
 		if !ok {
@@ -1806,6 +1806,7 @@ func CreateTx(param Params) map[string]interface{} {
 			return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Only support single spend address")
 		}
 		addr := inputs[i].(string)
+		sort.Sort(utxos)
 		for j, utxo := range utxos {
 			index = j
 			spendMoney += int64(utxo.Value)
@@ -1930,7 +1931,7 @@ func CreateVoteTx(param Params) map[string]interface{} {
 	if !ok {
 		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Can not find inputs")
 	}
-	var utxoList [][]*blockchain.UTXO
+	var utxoList []types.Utxos
 	var total int64
 	var multiTxNum = 0
 	var bundleUtxoSize = 100
@@ -1955,17 +1956,21 @@ func CreateVoteTx(param Params) map[string]interface{} {
 		if err != nil {
 			return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Internal error")
 		}
-		for m, utxo := range utxos {
-			total += int64(utxo.Value)
-			if m == len(utxos)-1 {
-				if (m+1)%bundleUtxoSize == 0 {
-					multiTxNum = (m + 1) / bundleUtxoSize
-				} else {
-					multiTxNum = (m+1)/bundleUtxoSize + 1
-				}
+
+		utxoList = append(utxoList, utxos)
+	}
+
+	utxos := utxoList[0]
+	sort.Sort(utxos)
+	for m, utxo := range utxos {
+		total += int64(utxo.Value)
+		if m == len(utxos)-1 {
+			if (m+1)%bundleUtxoSize == 0 {
+				multiTxNum = (m + 1) / bundleUtxoSize
+			} else {
+				multiTxNum = (m+1)/bundleUtxoSize + 1
 			}
 		}
-		utxoList = append(utxoList, utxos)
 	}
 
 	outputs, ok := param["outputs"].([]interface{})
