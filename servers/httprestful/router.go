@@ -144,7 +144,7 @@ func getQueryParam(r *http.Request, param map[string]interface{}) {
 }
 
 func init() {
-	lmt = tollbooth.NewLimiter(1, nil)
+	lmt = tollbooth.NewLimiter(10, nil)
 	lmt.SetTokenBucketExpirationTTL(30 * time.Second)
 	lmt.SetIPLookups([]string{"RemoteAddr", "X-Forwarded-For", "X-Real-IP"})
 	lmt.SetMethods([]string{"GET", "POST", "OPTION"})
