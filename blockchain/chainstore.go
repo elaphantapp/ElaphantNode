@@ -591,7 +591,9 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 			}
 		}
 		if vers == "2" {
-			txhd.Fee = txhd.Fee + uint64(*txhd.NodeFee)
+			if txhd.Type == "spend" {
+				txhd.Fee = txhd.Fee + uint64(*txhd.NodeFee)
+			}
 		} else {
 			txhd.NodeFee = nil
 			txhd.NodeOutputIndex = nil
