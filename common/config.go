@@ -7,14 +7,8 @@ import (
 )
 
 type config struct {
-	Cmc            Cmc
 	EarnReward     bool
 	BundleUtxoSize int
-}
-
-type Cmc struct {
-	ApiKey  []string
-	Inteval string
 }
 
 var Conf *config

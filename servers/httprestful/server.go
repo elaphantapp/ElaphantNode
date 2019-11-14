@@ -38,7 +38,6 @@ const (
 	ApiGetHistory                   = "/api/v1/history/:addr"
 	ApiGetHistory_v2                = "/api/v2/history/:addr"
 	ApiCreateTx                     = "/api/v1/createTx"
-	ApiCmc                          = "/api/v1/cmc"
 	ApiGetPublicKey                 = "/api/v1/pubkey/:addr"
 	ApiGetBalance                   = "/api/v1/balance/:addr"
 	ApiSendRawTx                    = "/api/v1/sendRawTx"
@@ -59,7 +58,6 @@ const (
 var ext_api_handle = map[string]bool{
 	ApiGetHistory:                   true,
 	ApiCreateTx:                     true,
-	ApiCmc:                          true,
 	ApiGetPublicKey:                 true,
 	ApiGetBalance:                   true,
 	ApiSendRawTx:                    true,
@@ -158,7 +156,6 @@ func (rt *restServer) initializeMethod() {
 		// extended
 		ApiGetHistory:                   {name: "gethistory", handler: servers.GetHistory},
 		ApiGetHistory_v2:                {name: "gethistory_v2", handler: servers.GetHistory},
-		ApiCmc:                          {name: "cmc", handler: servers.GetCmcPrice},
 		ApiGetPublicKey:                 {name: "getpublickey", handler: servers.GetPublicKey},
 		ApiGetBalance:                   {name: "getbalance", handler: servers.GetBalance},
 		ApiCurrHeight:                   {name: "currHeight", handler: servers.CurrHeight},
@@ -291,8 +288,6 @@ func (rt *restServer) getParams(r *http.Request, url string, req map[string]inte
 		getQueryParam(r, req)
 	case ApiCreateTx:
 	case ApiSendRawTx:
-	case ApiCmc:
-		getQueryParam(r, req)
 	case ApiCurrHeight:
 	case ApiGetNodeFee:
 	case ApiProducerStatistic:

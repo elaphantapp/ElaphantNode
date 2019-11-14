@@ -2158,31 +2158,6 @@ func CreateVoteTx(param Params) map[string]interface{} {
 	return ResponsePackEx(ELEPHANT_SUCCESS, paraListMap)
 }
 
-func GetCmcPrice(param Params) map[string]interface{} {
-	limit, ok := param["limit"].(string)
-	l := 0
-	var err error
-	if !ok {
-		l = 2000
-	} else {
-		l, err = strconv.Atoi(limit)
-		if err != nil {
-			return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "")
-		}
-		if l > 2000 || l <= 0 {
-			l = 2000
-		}
-	}
-	cmcs := blockchain2.DefaultChainStoreEx.GetCmcPrice()
-	if len(cmcs.C) < l {
-		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, " Cmc Price is not ready yet")
-	}
-	cmcs = types.Cmcs{
-		C: cmcs.C[:int64(l)],
-	}
-	return ResponsePackEx(ELEPHANT_SUCCESS, cmcs.C)
-}
-
 func ProducerStatistic(param Params) map[string]interface{} {
 	blockchain2.DefaultChainStoreEx.LockDposData()
 	defer blockchain2.DefaultChainStoreEx.UnlockDposData()

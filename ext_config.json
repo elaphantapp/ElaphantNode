@@ -1,8 +1,4 @@
 {
-  "Cmc":{
-    "ApiKey":["2192fabc-19cc-4f97-8bc8-67cdbe6f1cc3"],
-    "Inteval":"15m"
-  },
   "EarnReward":true,
   "BundleUtxoSize":700
 }
