@@ -610,13 +610,14 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 			txhs = append(txhs.(types.TransactionHistorySorter), *txhd)
 		}
 	}
-
-	poolTx := DefaultMemPool.GetMemPoolTx(address)
-	for _, txh := range poolTx {
-		if order == "desc" {
-			txhs = append(txhs.(types.TransactionHistorySorterDesc), txh)
-		} else {
-			txhs = append(txhs.(types.TransactionHistorySorter), txh)
+	if vers == "2" {
+		poolTx := DefaultMemPool.GetMemPoolTx(address)
+		for _, txh := range poolTx {
+			if order == "desc" {
+				txhs = append(txhs.(types.TransactionHistorySorterDesc), txh)
+			} else {
+				txhs = append(txhs.(types.TransactionHistorySorter), txh)
+			}
 		}
 	}
 

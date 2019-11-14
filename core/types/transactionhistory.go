@@ -227,6 +227,7 @@ func (th *TransactionHistory) Deserialize(r io.Reader) (*TransactionHistoryDispl
 	if err != nil {
 		txhd.NodeFee = &inf
 		txhd.NodeOutputIndex = &inoi
+		txhd.Status = "confirmed"
 		return txhd, nil
 	}
 	if th.NodeOutputIndex == 999999 {
@@ -277,10 +278,10 @@ func (a TransactionHistorySorterDesc) Len() int      { return len(a) }
 func (a TransactionHistorySorterDesc) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a TransactionHistorySorterDesc) Less(i, j int) bool {
 	if a[i].Height == 0 {
-		return false
+		return true
 	}
 	if a[j].Height == 0 {
-		return true
+		return false
 	}
 	return a[i].Height > a[j].Height
 }
