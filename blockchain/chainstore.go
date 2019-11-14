@@ -83,6 +83,11 @@ func NewChainStoreEx(chain *BlockChain, chainstore IChainStore, filePath string)
 		checkPoint:  true,
 	}
 	DefaultChainStoreEx = c
+	DefaultMemPool = MemPool{
+			c:    DefaultChainStoreEx,
+			is_p: make(map[common2.Uint256]bool),
+			p:    make(map[string][]byte),
+	}
 	go c.loop()
 	go c.initTask()
 	return c, nil

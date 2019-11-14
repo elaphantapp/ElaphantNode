@@ -18,11 +18,7 @@ import (
 	"strings"
 )
 
-var DefaultMemPool = MemPool{
-	c:    DefaultChainStoreEx,
-	is_p: make(map[common.Uint256]bool),
-	p:    make(map[string][]byte),
-}
+var DefaultMemPool MemPool
 
 type MemPool struct {
 	i    uint64
