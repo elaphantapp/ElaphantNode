@@ -245,7 +245,8 @@ func (th *TransactionHistory) Deserialize(r io.Reader) (*TransactionHistoryDispl
 
 	th.Status, err = common.ReadUint64(r)
 	if err != nil {
-		return txhd, errors.New("[TransactionHistory], NodeFee deserialize failed.")
+		txhd.Status = "confirmed"
+		return txhd, nil
 	}
 	var status = int64(th.Status)
 	if status == 0 {
@@ -264,15 +265,25 @@ func (th TransactionHistory) String() string {
 // the Height field.
 type TransactionHistorySorter []TransactionHistoryDisplay
 
-func (a TransactionHistorySorter) Len() int           { return len(a) }
-func (a TransactionHistorySorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a TransactionHistorySorter) Less(i, j int) bool { return a[i].Height < a[j].Height }
+func (a TransactionHistorySorter) Len() int      { return len(a) }
+func (a TransactionHistorySorter) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a TransactionHistorySorter) Less(i, j int) bool {
+	return a[i].Height < a[j].Height
+}
 
 type TransactionHistorySorterDesc []TransactionHistoryDisplay
 
-func (a TransactionHistorySorterDesc) Len() int           { return len(a) }
-func (a TransactionHistorySorterDesc) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a TransactionHistorySorterDesc) Less(i, j int) bool { return a[i].Height > a[j].Height }
+func (a TransactionHistorySorterDesc) Len() int      { return len(a) }
+func (a TransactionHistorySorterDesc) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a TransactionHistorySorterDesc) Less(i, j int) bool {
+	if a[i].Height == 0 {
+		return false
+	}
+	if a[j].Height == 0 {
+		return true
+	}
+	return a[i].Height > a[j].Height
+}
 
 func (a TransactionHistorySorter) Filter(from, size uint32) TransactionHistorySorter {
 	rst := TransactionHistorySorter{}

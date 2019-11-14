@@ -84,9 +84,9 @@ func NewChainStoreEx(chain *BlockChain, chainstore IChainStore, filePath string)
 	}
 	DefaultChainStoreEx = c
 	DefaultMemPool = MemPool{
-			c:    DefaultChainStoreEx,
-			is_p: make(map[common2.Uint256]bool),
-			p:    make(map[string][]byte),
+		c:    DefaultChainStoreEx,
+		is_p: make(map[common2.Uint256]bool),
+		p:    make(map[string][]byte),
 	}
 	go c.loop()
 	go c.initTask()
@@ -612,7 +612,6 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 	}
 
 	poolTx := DefaultMemPool.GetMemPoolTx(address)
-
 	for _, txh := range poolTx {
 		if order == "desc" {
 			txhs = append(txhs.(types.TransactionHistorySorterDesc), txh)

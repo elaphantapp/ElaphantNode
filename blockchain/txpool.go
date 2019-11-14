@@ -21,7 +21,7 @@ import (
 var DefaultMemPool MemPool
 
 type MemPool struct {
-	i    uint64
+	i    int
 	c    IChainStoreExtend
 	is_p map[common.Uint256]bool
 	p    map[string][]byte
@@ -222,6 +222,7 @@ func (m *MemPool) AppendToMemPool(tx *Transaction) error {
 			txh.Outputs = rto
 		}
 		txh.Memo = memo
+		txh.Status = 1
 		txhs = append(txhs, txh)
 	}
 
@@ -273,36 +274,25 @@ func (m *MemPool) isVoteTx(tx *Transaction) bool {
 }
 
 func (m *MemPool) store(txid common.Uint256, history types.TransactionHistory) error {
-	key := new(bytes.Buffer)
-	key.WriteByte(byte(DataTxHistoryPrefix))
-	err := common.WriteVarBytes(key, history.Address[:])
-	if err != nil {
-		return err
-	}
-	err = common.WriteUint64(key, history.Height)
-	if err != nil {
-		return err
-	}
-	err = common.WriteUint64(key, m.i)
-	if err != nil {
-		return err
-	}
-	err = common.WriteVarBytes(key, txid[:])
-	if err != nil {
-		return err
-	}
+	addr, _ := history.Address.ToAddress()
 	value := new(bytes.Buffer)
 	history.Serialize(value)
-	m.p[string(key.Bytes())] = value.Bytes()
+	m.p[addr+txid.String()+strconv.Itoa(m.i)] = value.Bytes()
 	return nil
 }
 
 func (m *MemPool) GetMemPoolTx(address *common.Uint168) (ret []types.TransactionHistoryDisplay) {
 
 	for k, v := range m.p {
-		if strings.Contains(k, string(address.Bytes())) {
+		log.Infof("key %s , address ", k, string(address.Bytes()))
+		addr, err := address.ToAddress()
+		if err != nil {
+			log.Warnf("Warn invalid address %s", addr)
+			return
+		}
+		if strings.Contains(k, addr) {
 			buf := new(bytes.Buffer)
-			buf.Read(v)
+			buf.Write(v)
 			txh := types.TransactionHistory{}
 			txhd, _ := txh.Deserialize(buf)
 			ret = append(ret, *txhd)
@@ -315,7 +305,7 @@ func (m *MemPool) GetMemPoolTx(address *common.Uint168) (ret []types.Transaction
 func (m *MemPool) DeleteMemPoolTx(txid common.Uint256) {
 
 	for k := range m.p {
-		if strings.Contains(k, string(txid.Bytes())) {
+		if strings.Contains(k, txid.String()) {
 			delete(m.p, k)
 			delete(m.is_p, txid)
 		}
