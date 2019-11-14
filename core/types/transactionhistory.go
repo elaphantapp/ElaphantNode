@@ -39,6 +39,7 @@ type TransactionHistory struct {
 	Memo            []byte
 	NodeOutputIndex uint64
 	NodeFee         uint64
+	Status          uint64
 }
 
 type TransactionHistoryDisplay struct {
@@ -55,6 +56,7 @@ type TransactionHistoryDisplay struct {
 	Memo            string
 	NodeOutputIndex *int64 `json:",omitempty"`
 	NodeFee         *int64 `json:",omitempty"`
+	Status          string `json:",omitempty"`
 }
 
 type ThResult struct {
@@ -126,6 +128,10 @@ func (th *TransactionHistory) Serialize(w io.Writer) error {
 	err = common.WriteUint64(w, th.NodeFee)
 	if err != nil {
 		return errors.New("[TransactionHistory], NodeFee serialize failed.")
+	}
+	err = common.WriteUint64(w, th.Status)
+	if err != nil {
+		return errors.New("[TransactionHistory], Status serialize failed.")
 	}
 	return nil
 }
@@ -235,6 +241,17 @@ func (th *TransactionHistory) Deserialize(r io.Reader) (*TransactionHistoryDispl
 	txhd.NodeFee = &nf
 	if err != nil {
 		return txhd, errors.New("[TransactionHistory], NodeFee deserialize failed.")
+	}
+
+	th.Status, err = common.ReadUint64(r)
+	if err != nil {
+		return txhd, errors.New("[TransactionHistory], NodeFee deserialize failed.")
+	}
+	var status = int64(th.Status)
+	if status == 0 {
+		txhd.Status = "confirmed"
+	} else {
+		txhd.Status = "pending"
 	}
 	return txhd, nil
 }

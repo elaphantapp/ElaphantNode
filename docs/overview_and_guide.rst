@@ -84,12 +84,6 @@ update config.json similar to the following content::
 Extra feature configure::
 
     {
-      //Get CMC Apikey go to https://coinmarketcap.com/api/
-      "Cmc":{
-        "ApiKey":["5c8bcab7-a811-428d-9c2b-3f0326de4f66","237bd580-3c68-42f8-b9e8-fd201c4933ac"],
-        // update schedule period, `m` stand for minutes
-        "Inteval":"15m"
-      },
       // Whether or not earn node reward , if set to false , your node will not receive transaction reward
       "EarnReward":true,
       // How many utxo we bundle together to create multi-transaction
@@ -211,22 +205,6 @@ Nginx config Example::
 
 
         location ~ ^/api/[v]?1/balance {
-            if ($request_method = OPTIONS ) {
-              add_header "Access-Control-Allow-Origin"  *;
-              add_header "Access-Control-Allow-Methods" "GET, POST, OPTIONS, HEAD";
-              add_header "Access-Control-Allow-Headers" "Authorization, Origin, X-Requested-With, Content-Type, Accept";
-              return 200;
-            }
-            proxy_pass http://localhost:20334;
-            proxy_connect_timeout 120s;
-            proxy_read_timeout 120s;
-            proxy_send_timeout 120s;
-            proxy_set_header Host $host;
-            proxy_set_header X-Forwarded-For $remote_addr;
-            proxy_set_header X-Real-IP $remote_addr;
-        }
-
-        location ~ ^/api/[v]?1/cmc {
             if ($request_method = OPTIONS ) {
               add_header "Access-Control-Allow-Origin"  *;
               add_header "Access-Control-Allow-Methods" "GET, POST, OPTIONS, HEAD";

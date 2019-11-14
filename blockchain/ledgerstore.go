@@ -6,7 +6,9 @@ import (
 	. "github.com/elastos/Elastos.ELA/core/types"
 )
 
-var DefaultChainStoreEx IChainStoreExtend
+var (
+	DefaultChainStoreEx IChainStoreExtend
+)
 
 type IChainStoreExtend interface {
 	IChainStore

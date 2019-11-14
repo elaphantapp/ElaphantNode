@@ -597,6 +597,7 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 		} else {
 			txhd.NodeFee = nil
 			txhd.NodeOutputIndex = nil
+			txhd.Status = ""
 		}
 		if order == "desc" {
 			txhs = append(txhs.(types.TransactionHistorySorterDesc), *txhd)
@@ -604,6 +605,17 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 			txhs = append(txhs.(types.TransactionHistorySorter), *txhd)
 		}
 	}
+
+	poolTx := DefaultMemPool.GetMemPoolTx(address)
+
+	for _, txh := range poolTx {
+		if order == "desc" {
+			txhs = append(txhs.(types.TransactionHistorySorterDesc), txh)
+		} else {
+			txhs = append(txhs.(types.TransactionHistorySorter), txh)
+		}
+	}
+
 	if order == "desc" {
 		sort.Sort(txhs.(types.TransactionHistorySorterDesc))
 	} else {
@@ -620,22 +632,6 @@ func (c *ChainStoreExtend) GetTxHistoryByPage(addr, order, vers string, pageNum,
 	} else {
 		return txhs.(types.TransactionHistorySorter).Filter(from, pageSize), len(txhs.(types.TransactionHistorySorter))
 	}
-}
-
-func (c *ChainStoreExtend) GetCmcPrice() types.Cmcs {
-	key := new(bytes.Buffer)
-	key.WriteByte(byte(DataCmcPrefix))
-	common2.WriteVarString(key, "CMC")
-	cmcs := types.Cmcs{}
-	buf, err := c.Get(key.Bytes())
-	if err != nil {
-		log.Warn("Can not get Cmc Price data")
-		return cmcs
-	}
-	val := new(bytes.Buffer)
-	val.Write(buf)
-	cmcs.Deserialize(val)
-	return cmcs
 }
 
 func (c *ChainStoreExtend) GetPublicKey(addr string) string {

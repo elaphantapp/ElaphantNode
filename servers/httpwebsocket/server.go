@@ -258,6 +258,10 @@ func SendTransaction2WSclient(v interface{}) {
 			instance.PushResult("sendnewtransaction", v)
 		}()
 	}
+	tx, ok := v.(*Transaction)
+	if ok {
+		go blockchain.DefaultMemPool.AppendToMemPool(tx)
+	}
 }
 
 func SendBlock2WSclient(v interface{}) {
