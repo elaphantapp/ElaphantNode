@@ -284,7 +284,6 @@ func (m *MemPool) store(txid common.Uint256, history types.TransactionHistory) e
 func (m *MemPool) GetMemPoolTx(address *common.Uint168) (ret []types.TransactionHistoryDisplay) {
 
 	for k, v := range m.p {
-		log.Infof("key %s , address ", k, string(address.Bytes()))
 		addr, err := address.ToAddress()
 		if err != nil {
 			log.Warnf("Warn invalid address %s", addr)
