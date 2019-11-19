@@ -35,7 +35,7 @@ func (c ChainStoreExtend) persistTransactionHistory(txhs []types.TransactionHist
 			return err
 		}
 	}
-	for _ , txh := range txhs {
+	for _, txh := range txhs {
 		c.deleteMemPoolTx(txh.Txid)
 	}
 	c.commit()

@@ -16,6 +16,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var DefaultMemPool MemPool
@@ -25,6 +26,7 @@ type MemPool struct {
 	c    IChainStoreExtend
 	is_p map[common.Uint256]bool
 	p    map[string][]byte
+	l    sync.RWMutex
 }
 
 func (m *MemPool) AppendToMemPool(tx *Transaction) error {
@@ -274,6 +276,8 @@ func (m *MemPool) isVoteTx(tx *Transaction) bool {
 }
 
 func (m *MemPool) store(txid common.Uint256, history types.TransactionHistory) error {
+	m.l.Lock()
+	defer m.l.Unlock()
 	addr, _ := history.Address.ToAddress()
 	value := new(bytes.Buffer)
 	history.Serialize(value)
@@ -282,7 +286,8 @@ func (m *MemPool) store(txid common.Uint256, history types.TransactionHistory) e
 }
 
 func (m *MemPool) GetMemPoolTx(address *common.Uint168) (ret []types.TransactionHistoryDisplay) {
-
+	m.l.RLock()
+	defer m.l.RUnlock()
 	for k, v := range m.p {
 		addr, err := address.ToAddress()
 		if err != nil {
@@ -302,7 +307,8 @@ func (m *MemPool) GetMemPoolTx(address *common.Uint168) (ret []types.Transaction
 }
 
 func (m *MemPool) DeleteMemPoolTx(txid common.Uint256) {
-
+	m.l.Lock()
+	defer m.l.Unlock()
 	for k := range m.p {
 		if strings.Contains(k, txid.String()) {
 			delete(m.p, k)
