@@ -587,7 +587,7 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 			txhd.Outputs = []string{txhd.Address}
 		} else {
 			txhd.Inputs = []string{txhd.Address}
-			if vers != "2" {
+			if vers == "1" {
 				txhd.Outputs = []string{txhd.Outputs[0]}
 			} else {
 				if len(txhd.Outputs) > 10 {
@@ -595,11 +595,17 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 				}
 			}
 		}
-		if vers == "2" {
+		if vers == "3" {
 			if txhd.Type == "spend" {
 				txhd.Fee = txhd.Fee + uint64(*txhd.NodeFee)
 			}
-		} else {
+			txhd.TxType = strings.ToLower(txhd.TxType[0:1]) + txhd.TxType[1:]
+		} else if vers == "2" {
+			if txhd.Type == "spend" {
+				txhd.Fee = txhd.Fee + uint64(*txhd.NodeFee)
+			}
+			txhd.Status = ""
+		} else if vers == "1" {
 			txhd.NodeFee = nil
 			txhd.NodeOutputIndex = nil
 			txhd.Status = ""
@@ -610,9 +616,10 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 			txhs = append(txhs.(types.TransactionHistorySorter), *txhd)
 		}
 	}
-	if vers == "2" {
+	if vers == "3" {
 		poolTx := DefaultMemPool.GetMemPoolTx(address)
 		for _, txh := range poolTx {
+			txh.TxType = strings.ToLower(txh.TxType[0:1]) + txh.TxType[1:]
 			if order == "desc" {
 				txhs = append(txhs.(types.TransactionHistorySorterDesc), txh)
 			} else {
