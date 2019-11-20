@@ -37,6 +37,7 @@ const (
 	//extended
 	ApiGetHistory                   = "/api/v1/history/:addr"
 	ApiGetHistory_v2                = "/api/v2/history/:addr"
+	ApiGetHistory_v3                = "/api/v3/history/:addr"
 	ApiCreateTx                     = "/api/v1/createTx"
 	ApiGetPublicKey                 = "/api/v1/pubkey/:addr"
 	ApiGetBalance                   = "/api/v1/balance/:addr"
@@ -57,6 +58,8 @@ const (
 
 var ext_api_handle = map[string]bool{
 	ApiGetHistory:                   true,
+	ApiGetHistory_v2:                true,
+	ApiGetHistory_v3:                true,
 	ApiCreateTx:                     true,
 	ApiGetPublicKey:                 true,
 	ApiGetBalance:                   true,
@@ -156,6 +159,7 @@ func (rt *restServer) initializeMethod() {
 		// extended
 		ApiGetHistory:                   {name: "gethistory", handler: servers.GetHistory},
 		ApiGetHistory_v2:                {name: "gethistory_v2", handler: servers.GetHistory},
+		ApiGetHistory_v3:                {name: "gethistory_v3", handler: servers.GetHistory},
 		ApiGetPublicKey:                 {name: "getpublickey", handler: servers.GetPublicKey},
 		ApiGetBalance:                   {name: "getbalance", handler: servers.GetBalance},
 		ApiCurrHeight:                   {name: "currHeight", handler: servers.CurrHeight},
@@ -208,6 +212,8 @@ func (rt *restServer) getPath(url string) string {
 		return ApiGetHistory
 	} else if strings.Contains(url, strings.TrimRight(ApiGetHistory_v2, ":addr")) {
 		return ApiGetHistory_v2
+	} else if strings.Contains(url, strings.TrimRight(ApiGetHistory_v3, ":addr")) {
+		return ApiGetHistory_v3
 	} else if strings.Contains(url, strings.TrimRight(ApiGetPublicKey, ":addr")) {
 		return ApiGetPublicKey
 	} else if strings.Contains(url, strings.TrimRight(ApiGetBalance, ":addr")) {
@@ -280,6 +286,10 @@ func (rt *restServer) getParams(r *http.Request, url string, req map[string]inte
 		req["addr"] = getParam(r, "addr")
 		req["version"] = "2"
 		getQueryParam(r, req)
+	case ApiGetHistory_v3:
+		req["addr"] = getParam(r, "addr")
+		req["version"] = "3"
+		getQueryParam(r, req)
 	case ApiGetPublicKey:
 		req["addr"] = getParam(r, "addr")
 		getQueryParam(r, req)
@@ -337,14 +347,14 @@ func (rt *restServer) initGetHandler() {
 			}
 			rt.response(w, resp)
 		})
-		k = strings.Replace(k, "/api/v1/", "/api/1/", 1)
-		k = strings.Replace(k, "/api/v2/", "/api/2/", 1)
+		k = strings.Replace(k, "/api/v", "/api/", 1)
 		rt.router.Get(k, func(w http.ResponseWriter, r *http.Request) {
 
 			var req = make(map[string]interface{})
 			var resp map[string]interface{}
-			r.URL.Path = strings.Replace(r.URL.Path, "/api/1/", "/api/v1/", 1)
-			r.URL.Path = strings.Replace(r.URL.Path, "/api/2/", "/api/v2/", 1)
+			if !strings.Contains(r.URL.Path, "/api/v") {
+				r.URL.Path = strings.Replace(r.URL.Path, "/api/", "/api/v", 1)
+			}
 			url := rt.getPath(r.URL.Path)
 			if h, ok := rt.getMap[url]; ok {
 				req = rt.getParams(r, url, req)
@@ -392,8 +402,7 @@ func (rt *restServer) initPostHandler() {
 			}
 			rt.response(w, resp)
 		})
-		k = strings.Replace(k, "/api/v1/", "/api/1/", 1)
-		k = strings.Replace(k, "/api/v2/", "/api/2/", 1)
+		k = strings.Replace(k, "/api/v", "/api/", 1)
 		rt.router.Post(k, func(w http.ResponseWriter, r *http.Request) {
 
 			body, _ := ioutil.ReadAll(r.Body)
@@ -401,8 +410,9 @@ func (rt *restServer) initPostHandler() {
 
 			var req = make(map[string]interface{})
 			var resp map[string]interface{}
-			r.URL.Path = strings.Replace(r.URL.Path, "/api/1/", "/api/v1/", 1)
-			r.URL.Path = strings.Replace(r.URL.Path, "/api/2/", "/api/v2/", 1)
+			if !strings.Contains(r.URL.Path, "/api/v") {
+				r.URL.Path = strings.Replace(r.URL.Path, "/api/", "/api/v", 1)
+			}
 			url := rt.getPath(r.URL.Path)
 			if h, ok := rt.postMap[url]; ok {
 				if err := json.Unmarshal(body, &req); err == nil {

@@ -35,8 +35,15 @@ func (c ChainStoreExtend) persistTransactionHistory(txhs []types.TransactionHist
 			return err
 		}
 	}
+	for _, txh := range txhs {
+		c.deleteMemPoolTx(txh.Txid)
+	}
 	c.commit()
 	return nil
+}
+
+func (c ChainStoreExtend) deleteMemPoolTx(txid common.Uint256) {
+	DefaultMemPool.DeleteMemPoolTx(txid)
 }
 
 // key: DataEntryPrefix + height + address

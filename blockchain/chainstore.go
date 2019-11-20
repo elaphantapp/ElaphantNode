@@ -83,6 +83,11 @@ func NewChainStoreEx(chain *BlockChain, chainstore IChainStore, filePath string)
 		checkPoint:  true,
 	}
 	DefaultChainStoreEx = c
+	DefaultMemPool = MemPool{
+		c:    DefaultChainStoreEx,
+		is_p: make(map[common2.Uint256]bool),
+		p:    make(map[string][]byte),
+	}
 	go c.loop()
 	go c.initTask()
 	return c, nil
@@ -582,7 +587,7 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 			txhd.Outputs = []string{txhd.Address}
 		} else {
 			txhd.Inputs = []string{txhd.Address}
-			if vers != "2" {
+			if vers == "1" {
 				txhd.Outputs = []string{txhd.Outputs[0]}
 			} else {
 				if len(txhd.Outputs) > 10 {
@@ -590,13 +595,20 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 				}
 			}
 		}
-		if vers == "2" {
+		if vers == "3" {
 			if txhd.Type == "spend" {
 				txhd.Fee = txhd.Fee + uint64(*txhd.NodeFee)
 			}
-		} else {
+			txhd.TxType = strings.ToLower(txhd.TxType[0:1]) + txhd.TxType[1:]
+		} else if vers == "2" {
+			if txhd.Type == "spend" {
+				txhd.Fee = txhd.Fee + uint64(*txhd.NodeFee)
+			}
+			txhd.Status = ""
+		} else if vers == "1" {
 			txhd.NodeFee = nil
 			txhd.NodeOutputIndex = nil
+			txhd.Status = ""
 		}
 		if order == "desc" {
 			txhs = append(txhs.(types.TransactionHistorySorterDesc), *txhd)
@@ -604,6 +616,18 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 			txhs = append(txhs.(types.TransactionHistorySorter), *txhd)
 		}
 	}
+	if vers == "3" {
+		poolTx := DefaultMemPool.GetMemPoolTx(address)
+		for _, txh := range poolTx {
+			txh.TxType = strings.ToLower(txh.TxType[0:1]) + txh.TxType[1:]
+			if order == "desc" {
+				txhs = append(txhs.(types.TransactionHistorySorterDesc), txh)
+			} else {
+				txhs = append(txhs.(types.TransactionHistorySorter), txh)
+			}
+		}
+	}
+
 	if order == "desc" {
 		sort.Sort(txhs.(types.TransactionHistorySorterDesc))
 	} else {
@@ -620,22 +644,6 @@ func (c *ChainStoreExtend) GetTxHistoryByPage(addr, order, vers string, pageNum,
 	} else {
 		return txhs.(types.TransactionHistorySorter).Filter(from, pageSize), len(txhs.(types.TransactionHistorySorter))
 	}
-}
-
-func (c *ChainStoreExtend) GetCmcPrice() types.Cmcs {
-	key := new(bytes.Buffer)
-	key.WriteByte(byte(DataCmcPrefix))
-	common2.WriteVarString(key, "CMC")
-	cmcs := types.Cmcs{}
-	buf, err := c.Get(key.Bytes())
-	if err != nil {
-		log.Warn("Can not get Cmc Price data")
-		return cmcs
-	}
-	val := new(bytes.Buffer)
-	val.Write(buf)
-	cmcs.Deserialize(val)
-	return cmcs
 }
 
 func (c *ChainStoreExtend) GetPublicKey(addr string) string {
