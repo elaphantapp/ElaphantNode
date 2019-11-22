@@ -38,6 +38,7 @@ func (m *MemPool) AppendToMemPool(tx *Transaction) error {
 	var node_fee common.Fixed64
 	var node_output_index uint64 = 999999
 	var memo []byte
+	var Ori_TxType = tx.TxType
 	for _, attr := range tx.Attributes {
 		if attr.Usage == Memo {
 			memo = attr.Data
@@ -258,7 +259,7 @@ func (m *MemPool) AppendToMemPool(tx *Transaction) error {
 			return err
 		}
 	}
-
+	tx.TxType = Ori_TxType
 	return nil
 }
 
