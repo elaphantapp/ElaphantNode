@@ -34,13 +34,13 @@ Set correct environment variables::
 
 Clone source code to $GOPATH/src/github/elastos folder,Make sure you are in the folder of $GOPATH/src/github.com/elastos::
 
-    $ git clone https://github.com/elastos/Elastos.ELA.Elephant.Node.git
+    $ git clone https://https://github.com/elaphantapp/ElaphantNode.git
 
-If clone works successfully, you should see folder structure like $GOPATH/src/github.com/elastos/Elastos.ELA.Elephant.Node/Makefile
+If clone works successfully, you should see folder structure like $GOPATH/src/https://github.com/elaphantapp/ElaphantNode/Makefile
 
 Make,Build the node::
 
-    $ cd $GOPATH/src/github.com/elastos/Elastos.ELA.Elephant.Node
+    $ cd $GOPATH/src/https://github.com/elaphantapp/ElaphantNode
     $ make
 
 update config.json similar to the following content::
