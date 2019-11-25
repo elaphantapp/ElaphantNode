@@ -250,9 +250,9 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 		txhs := make([]types.TransactionHistory, 0)
 		pubks := make(map[common2.Uint168][]byte)
 		dposReward := make(map[common2.Uint168]common2.Fixed64)
-
 		for i := 0; i < len(txs); i++ {
 			tx := txs[i]
+			var tx_type = tx.TxType
 			txid, err := common.ReverseHexString(tx.Hash().String())
 			if err != nil {
 				return err
@@ -517,6 +517,7 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 					txhs = append(txhs, txh)
 				}
 			}
+			tx.TxType = tx_type
 		}
 		c.persistTransactionHistory(txhs)
 		c.persistPbks(pubks)
