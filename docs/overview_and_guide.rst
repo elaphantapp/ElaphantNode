@@ -11,10 +11,6 @@ Following is how we build elephant node in ubuntu.
 Ubuntu
 ******
 
-Install git::
-
-    $ sudo apt-get install -y git
-
 Install essentials and Go ::
 
     $ sudo apt-get install -y software-properties-common
@@ -31,6 +27,7 @@ Set correct environment variables::
 
     export GOROOT=/usr/local/opt/go@1.12/libexec
     export GOPATH=$HOME/dev
+    export GO111MODULE=on
     export GOBIN=$GOPATH/bin
     export PATH=$GOROOT/bin:$PATH
     export PATH=$GOBIN:$PATH
@@ -41,15 +38,10 @@ Clone source code to $GOPATH/src/github/elastos folder,Make sure you are in the 
 
 If clone works successfully, you should see folder structure like $GOPATH/src/github.com/elastos/Elastos.ELA.Elephant.Node/Makefile
 
-Install Glide, Glide is a package manager for Golang. We use Glide to install dependent packages::
-
-    $ cd ~/dev
-    $ curl https://glide.sh/get | sh
-
 Make,Build the node::
 
     $ cd $GOPATH/src/github.com/elastos/Elastos.ELA.Elephant.Node
-    $ glide update & glide install (for chinese users you may need to use vpn to download dependency)
+    $ make
 
 update config.json similar to the following content::
 
@@ -253,6 +245,38 @@ Nginx config Example::
         }
 
         location ~ ^/api/[v]?1/history {
+            if ($request_method = OPTIONS ) {
+              add_header "Access-Control-Allow-Origin"  *;
+              add_header "Access-Control-Allow-Methods" "GET, POST, OPTIONS, HEAD";
+              add_header "Access-Control-Allow-Headers" "Authorization, Origin, X-Requested-With, Content-Type, Accept";
+              return 200;
+            }
+            proxy_pass http://localhost:20334;
+            proxy_connect_timeout 120s;
+            proxy_read_timeout 120s;
+            proxy_send_timeout 120s;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location ~ ^/api/[v]?2/history {
+            if ($request_method = OPTIONS ) {
+              add_header "Access-Control-Allow-Origin"  *;
+              add_header "Access-Control-Allow-Methods" "GET, POST, OPTIONS, HEAD";
+              add_header "Access-Control-Allow-Headers" "Authorization, Origin, X-Requested-With, Content-Type, Accept";
+              return 200;
+            }
+            proxy_pass http://localhost:20334;
+            proxy_connect_timeout 120s;
+            proxy_read_timeout 120s;
+            proxy_send_timeout 120s;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location ~ ^/api/[v]?3/history {
             if ($request_method = OPTIONS ) {
               add_header "Access-Control-Allow-Origin"  *;
               add_header "Access-Control-Allow-Methods" "GET, POST, OPTIONS, HEAD";

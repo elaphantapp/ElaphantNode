@@ -774,7 +774,7 @@ Get transaction history , version 1
 
    .. sourcecode:: http
 
-      GET /api/v1/history/ HTTP/1.1
+      GET /api/v1/history/EHCGDgxxRTj4rTSmZESmVqDHfYPZZWPpFQ HTTP/1.1
       Host: localhost
 
    **Example response**:
@@ -1076,7 +1076,7 @@ Changed meaning :  Fee now is the total spending fee , contains the node reward 
 
    .. sourcecode:: http
 
-      GET /api/v2/history/ HTTP/1.1
+      GET /api/v2/history/EHCGDgxxRTj4rTSmZESmVqDHfYPZZWPpFQ HTTP/1.1
       Host: localhost
 
    **Example response**:
@@ -1154,6 +1154,97 @@ Changed meaning :  Fee now is the total spending fee , contains the node reward 
               ],
               "TotalNum":69180
           }
+        }
+
+Get transaction history , version 3
+------------------------------------------------
+Now you can get the pending transaction, which is now only stored in transaction pool,
+add one more field `status` it can be `pending` or `confirmed`
+
+.. http:get:: /api/v3/history/(string:`addr`)?pageSize=(int:`pageSize`)&pageNum=(int:`pageNum`)&order=asc
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v3/history/EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW HTTP/1.1
+      Host: localhost
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+        {
+          "result": {
+            "History": [
+              {
+                "Address": "EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW",
+                "Txid": "4a074853554c51a5c2ca08aa0a2a88ceddb9f82565aa7b57c323c2af8f46ff18",
+                "Type": "spend",
+                "Value": 409036,
+                "CreateTime": 0,
+                "Height": 0,
+                "Fee": 100,
+                "Inputs": [
+                  "EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW"
+                ],
+                "Outputs": [
+                  "Ed57c3wF3J1u8vEYE9cjGUpqGPkEJC69v8",
+                  "EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW"
+                ],
+                "TxType": "transferAsset",
+                "Memo": "type:text,msg:From ELABank,ThaiEla Super Node Reward Distribution",
+                "NodeOutputIndex": -1,
+                "NodeFee": 0,
+                "Status": "pending"
+              },
+              {
+                "Address": "EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW",
+                "Txid": "87921fc5d840d40ec331cb23a47d58fb7a18b246c2fa793144747578725759e3",
+                "Type": "income",
+                "Value": 2000000,
+                "CreateTime": 1560699457,
+                "Height": 402147,
+                "Fee": 0,
+                "Inputs": [
+                  "EVSvG1y3zQBKu6H8yCXVTDVqBDGhGDgSXh"
+                ],
+                "Outputs": [
+                  "EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW"
+                ],
+                "TxType": "transferAsset",
+                "Memo": "type:text,msg:ELABANK Share",
+                "NodeOutputIndex": -1,
+                "NodeFee": 0,
+                "Status": "confirmed"
+              },
+              {
+                "Address": "EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW",
+                "Txid": "34822a4b4c2c7efd559d395febb1c898f965c36d415d64296930361713be280f",
+                "Type": "income",
+                "Value": 3000000,
+                "CreateTime": 1560711311,
+                "Height": 402260,
+                "Fee": 0,
+                "Inputs": [
+                  "ETWvTCV7Gf7bngSeWEYveZ79qmcy4mvpu8"
+                ],
+                "Outputs": [
+                  "EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW"
+                ],
+                "TxType": "transferAsset",
+                "Memo": "type:text,msg:ThaiEla share",
+                "NodeOutputIndex": -1,
+                "NodeFee": 0,
+                "Status": "confirmed"
+              }
+            ],
+            "TotalNum": 2993
+          },
+          "status": 200
         }
 
 
