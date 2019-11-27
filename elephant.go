@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	blockchain2 "github.com/elastos/Elastos.ELA.Elephant.Node/blockchain"
+	common2 "github.com/elastos/Elastos.ELA.Elephant.Node/cmd/common"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/common"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/servers"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/servers/httpjsonrpc"
@@ -70,11 +71,13 @@ func setupNode() *cli.App {
 	app.Flags = []cli.Flag{
 		cmdcom.ConfigFileFlag,
 		cmdcom.DataDirFlag,
+		common2.NodeKeyFlag,
 		cmdcom.AccountPasswordFlag,
 	}
 	app.Action = func(c *cli.Context) {
 		setupConfig(c)
 		setupLog(c)
+		nodeInfo(c)
 		startNode(c)
 	}
 	app.Before = func(c *cli.Context) error {
@@ -113,8 +116,6 @@ func setupConfig(c *cli.Context) {
 }
 
 func startNode(c *cli.Context) {
-	// Node Info
-	nodeInfo()
 
 	// Enable http profiling server if requested.
 	if cfg.ProfilePort != 0 {
@@ -135,11 +136,6 @@ func startNode(c *cli.Context) {
 			printErrorAndExit(err)
 		}
 	}
-
-	log.Infof("Node version: %s", Version)
-	log.Info(GoVersion)
-	did, err := common.GetDIDFromPrivKey(hex.EncodeToString(servers.NodePrivKey))
-	log.Infof("Node DID: %s", did)
 
 	var interrupt = signal.NewInterrupt()
 
@@ -373,38 +369,45 @@ func printSyncState(db blockchain.IChainStore, server elanet.Server) {
 	}
 }
 
-func nodeInfo() {
+func nodeInfo(c *cli.Context) {
 	// Enter PayToAddr private key
 	var err error
-	if len(os.Args) == 2 {
-		servers.NodePrivKey, err = hex.DecodeString(os.Args[1])
+	key := c.String("key")
+	if len(key) != 0 {
+		servers.NodePrivKey, err = hex.DecodeString(key)
 		if err != nil {
-			printErrorAndExit(err)
+			printErrorAndExit(errors.New("invalid private key"))
 		}
 	} else {
 		log.Info("\nPlease enter node reward address private key: ")
 		privKey, err := gopass.GetPasswd()
 		if err != nil {
-			printErrorAndExit(err)
+			printErrorAndExit(errors.New("invalid private key"))
 		}
 		servers.NodePrivKey, err = hex.DecodeString(string(privKey))
 		if err != nil {
-			printErrorAndExit(err)
+			printErrorAndExit(errors.New("invalid private key"))
 		}
 	}
 	pub, err := common.GetPublicKeyFromPrivKey(hex.EncodeToString(servers.NodePrivKey))
 	if err != nil {
-		printErrorAndExit(err)
+		printErrorAndExit(errors.New("invalid private key"))
 	}
 	servers.NodePubKey, err = pub.EncodePoint(true)
 	if err != nil {
-		printErrorAndExit(err)
+		printErrorAndExit(errors.New("invalid private key"))
 	}
 	addr, err := common.GetAddressFromPrivKey(hex.EncodeToString(servers.NodePrivKey))
 	if err != nil {
-		printErrorAndExit(err)
+		printErrorAndExit(errors.New("invalid private key"))
 	}
 	if addr != cfg.PowConfiguration.PayToAddr {
 		printErrorAndExit(errors.New("Invalid private key , not matching configuration PowConfiguration.PayToAddr " + cfg.PowConfiguration.PayToAddr))
 	}
+
+	log.Infof("Node version: %s", Version)
+	log.Info(GoVersion)
+	did, err := common.GetDIDFromPrivKey(hex.EncodeToString(servers.NodePrivKey))
+	log.Infof("Node DID: %s", did)
+
 }
