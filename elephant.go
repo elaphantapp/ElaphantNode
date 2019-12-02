@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/elastos/Elastos.ELA.Elephant.Node/elanet"
 	"github.com/elastos/Elastos.ELA/blockchain"
 	cmdcom "github.com/elastos/Elastos.ELA/cmd/common"
 	"github.com/elastos/Elastos.ELA/common/log"
@@ -32,7 +33,6 @@ import (
 	dlog "github.com/elastos/Elastos.ELA/dpos/log"
 	"github.com/elastos/Elastos.ELA/dpos/state"
 	"github.com/elastos/Elastos.ELA/dpos/store"
-	"github.com/elastos/Elastos.ELA/elanet"
 	"github.com/elastos/Elastos.ELA/elanet/routes"
 	"github.com/elastos/Elastos.ELA/mempool"
 	"github.com/elastos/Elastos.ELA/p2p"
