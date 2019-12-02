@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"github.com/elastos/Elastos.ELA.Elephant.Node/blockchain"
 	"net"
 	"net/http"
 	"strconv"
@@ -258,10 +257,6 @@ func SendTransaction2WSclient(v interface{}) {
 			instance.PushResult("sendnewtransaction", v)
 		}()
 	}
-	tx, ok := v.(*Transaction)
-	if ok {
-		go blockchain.DefaultMemPool.AppendToMemPool(tx)
-	}
 }
 
 func SendBlock2WSclient(v interface{}) {
@@ -270,10 +265,6 @@ func SendBlock2WSclient(v interface{}) {
 	//		instance.PushResult("sendblock", v)
 	//	}()
 	//}
-	b, ok := v.(*Block)
-	if ok {
-		go blockchain.DefaultChainStoreEx.AddTask(b)
-	}
 	if PushRawBlockFlag {
 		go func() {
 			instance.PushResult("sendrawblock", v)

@@ -52,6 +52,9 @@ var (
 	// printStateInterval is the interval to print out peer-to-peer network
 	// state.
 	printStateInterval = time.Minute
+
+	// only sync data from other peers
+	PureSync bool
 )
 
 func main() {
@@ -71,12 +74,14 @@ func setupNode() *cli.App {
 	app.Flags = []cli.Flag{
 		cmdcom.ConfigFileFlag,
 		cmdcom.DataDirFlag,
+		common2.PureSyncFlag,
 		common2.NodeKeyFlag,
 		cmdcom.AccountPasswordFlag,
 	}
 	app.Action = func(c *cli.Context) {
 		setupConfig(c)
 		setupLog(c)
+		pureSync(c)
 		nodeInfo(c)
 		startNode(c)
 	}
@@ -94,6 +99,10 @@ func setupNode() *cli.App {
 	}
 
 	return app
+}
+
+func pureSync(c *cli.Context) {
+	PureSync = c.Bool("pure")
 }
 
 func setupConfig(c *cli.Context) {
@@ -291,18 +300,20 @@ func startNode(c *cli.Context) {
 	server.Start()
 	defer server.Stop()
 
-	log.Info("Start services")
-	if cfg.EnableRPC {
-		go httpjsonrpc.StartRPCServer()
-	}
-	if cfg.HttpRestStart {
-		go httprestful.StartServer()
-	}
-	if cfg.HttpWsStart {
-		go httpwebsocket.Start()
-	}
-	if cfg.HttpInfoStart {
-		go httpnodeinfo.StartServer()
+	if !PureSync {
+		log.Info("Start services")
+		if cfg.EnableRPC {
+			go httpjsonrpc.StartRPCServer()
+		}
+		if cfg.HttpRestStart {
+			go httprestful.StartServer()
+		}
+		if cfg.HttpWsStart {
+			go httpwebsocket.Start()
+		}
+		if cfg.HttpInfoStart {
+			go httpnodeinfo.StartServer()
+		}
 	}
 
 	go printSyncState(chainStore, server)
@@ -370,44 +381,45 @@ func printSyncState(db blockchain.IChainStore, server elanet.Server) {
 }
 
 func nodeInfo(c *cli.Context) {
-	// Enter PayToAddr private key
-	var err error
-	key := c.String("key")
-	if len(key) != 0 {
-		servers.NodePrivKey, err = hex.DecodeString(key)
+	if !PureSync {
+		// Enter PayToAddr private key
+		var err error
+		key := c.String("key")
+		if len(key) != 0 {
+			servers.NodePrivKey, err = hex.DecodeString(key)
+			if err != nil {
+				printErrorAndExit(errors.New("invalid private key"))
+			}
+		} else {
+			log.Info("\nPlease enter node reward address private key: ")
+			privKey, err := gopass.GetPasswd()
+			if err != nil {
+				printErrorAndExit(errors.New("invalid private key"))
+			}
+			servers.NodePrivKey, err = hex.DecodeString(string(privKey))
+			if err != nil {
+				printErrorAndExit(errors.New("invalid private key"))
+			}
+		}
+		pub, err := common.GetPublicKeyFromPrivKey(hex.EncodeToString(servers.NodePrivKey))
 		if err != nil {
 			printErrorAndExit(errors.New("invalid private key"))
 		}
-	} else {
-		log.Info("\nPlease enter node reward address private key: ")
-		privKey, err := gopass.GetPasswd()
+		servers.NodePubKey, err = pub.EncodePoint(true)
 		if err != nil {
 			printErrorAndExit(errors.New("invalid private key"))
 		}
-		servers.NodePrivKey, err = hex.DecodeString(string(privKey))
+		addr, err := common.GetAddressFromPrivKey(hex.EncodeToString(servers.NodePrivKey))
 		if err != nil {
 			printErrorAndExit(errors.New("invalid private key"))
 		}
-	}
-	pub, err := common.GetPublicKeyFromPrivKey(hex.EncodeToString(servers.NodePrivKey))
-	if err != nil {
-		printErrorAndExit(errors.New("invalid private key"))
-	}
-	servers.NodePubKey, err = pub.EncodePoint(true)
-	if err != nil {
-		printErrorAndExit(errors.New("invalid private key"))
-	}
-	addr, err := common.GetAddressFromPrivKey(hex.EncodeToString(servers.NodePrivKey))
-	if err != nil {
-		printErrorAndExit(errors.New("invalid private key"))
-	}
-	if addr != cfg.PowConfiguration.PayToAddr {
-		printErrorAndExit(errors.New("Invalid private key , not matching configuration PowConfiguration.PayToAddr " + cfg.PowConfiguration.PayToAddr))
-	}
+		if addr != cfg.PowConfiguration.PayToAddr {
+			printErrorAndExit(errors.New("Invalid private key , not matching configuration PowConfiguration.PayToAddr " + cfg.PowConfiguration.PayToAddr))
+		}
 
-	log.Infof("Node version: %s", Version)
-	log.Info(GoVersion)
-	did, err := common.GetDIDFromPrivKey(hex.EncodeToString(servers.NodePrivKey))
-	log.Infof("Node DID: %s", did)
-
+		log.Infof("Node version: %s", Version)
+		log.Info(GoVersion)
+		did, err := common.GetDIDFromPrivKey(hex.EncodeToString(servers.NodePrivKey))
+		log.Infof("Node DID: %s", did)
+	}
 }
