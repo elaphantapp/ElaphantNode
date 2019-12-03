@@ -11,37 +11,17 @@ Following is how we build elephant node in ubuntu.
 Ubuntu
 ******
 
-Install essentials and Go ::
+Install elaphant for linux ::
 
-    $ sudo apt-get install -y software-properties-common
-    $ sudo add-apt-repository -y ppa:gophers/archive
-    $ sudo apt update
-    $ sudo apt-get install -y golang-1.12-go
-
-Setup basic workspace,In this instruction we use ~/dev/src/github.com/elastos as our working directory. If you clone the source code to a different directory, please make sure you change other environment variables accordingly (not recommended)::
-
-    $ mkdir -p ~/dev/bin
-    $ mkdir -p ~/dev/src/github.com/elastos/
-
-Set correct environment variables::
-
-    export GOROOT=/usr/local/opt/go@1.12/libexec
-    export GOPATH=$HOME/dev
-    export GO111MODULE=on
-    export GOBIN=$GOPATH/bin
-    export PATH=$GOROOT/bin:$PATH
-    export PATH=$GOBIN:$PATH
-
-Clone source code to $GOPATH/src/github/elastos folder,Make sure you are in the folder of $GOPATH/src/github.com/elastos::
-
-    $ git clone https://https://github.com/elaphantapp/ElaphantNode.git
-
-If clone works successfully, you should see folder structure like $GOPATH/src/https://github.com/elaphantapp/ElaphantNode/Makefile
-
-Make,Build the node::
-
-    $ cd $GOPATH/src/https://github.com/elaphantapp/ElaphantNode
-    $ make
+    $ apt-get install build-essential
+    $ adduser elaphant
+    $ usermod -aG sudo test
+    $ su - elaphant
+    $ sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
+    $ echo 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)' >>~/.profile
+    $ source ~/.profile
+    $ brew tap elaphantapp/elaphant
+    $ brew install elaphant
 
 update config.json similar to the following content::
 
@@ -83,13 +63,13 @@ Extra feature configure::
     }
 
 
-If you did not see any error message, congratulations, you have made the Elephant full node.
+if you only want to syncing the node to the current height, you can run::
 
-Run the node::
+    $ elaphant --pure
 
-    $ sudo apt-get install build-essential
-    $ make
-    $ ./elaphant
+after fulling synced . you can stop the node and restart it with more startup options :
+
+    $ elaphant --key "{private key}" --password "{keystore password}"
 
 Nginx config Example::
 
