@@ -50,7 +50,7 @@ read user
 apt-get install build-essential
 adduser $user
 usermod -aG sudo $user
-su - $user
+sudo -i -u $user bash << EOF
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
 echo 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)' >>~/.profile
 source ~/.profile
