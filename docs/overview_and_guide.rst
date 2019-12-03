@@ -15,7 +15,7 @@ Install elaphant for linux ::
 
     $ apt-get install build-essential
     $ adduser elaphant
-    $ usermod -aG sudo test
+    $ usermod -aG sudo elaphant
     $ su - elaphant
     $ sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
     $ echo 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)' >>~/.profile
@@ -67,7 +67,7 @@ if you only want to syncing the node to the current height, you can run::
 
     $ elaphant --pure
 
-after fulling synced . you can stop the node and restart it with more startup options :
+after fulling synced . you can stop the node and restart it with more startup options ::
 
     $ elaphant --key "{private key}" --password "{keystore password}"
 
