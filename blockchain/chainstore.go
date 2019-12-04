@@ -581,10 +581,12 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 		txh := types.TransactionHistory{}
 		txhd, _ := txh.Deserialize(val)
 		if txhd.Type == "income" {
-			if len(txhd.Inputs) > 0 {
+			if vers == "1" {
 				txhd.Inputs = []string{txhd.Inputs[0]}
 			} else {
-				txhd.Inputs = []string{}
+				if len(txhd.Inputs) > 10 {
+					txhd.Inputs = txhd.Inputs[0:10]
+				}
 			}
 			txhd.Outputs = []string{txhd.Address}
 		} else {
@@ -622,6 +624,9 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 		poolTx := DefaultMemPool.GetMemPoolTx(address)
 		for _, txh := range poolTx {
 			txh.TxType = strings.ToLower(txh.TxType[0:1]) + txh.TxType[1:]
+			if txh.Type == "spend" {
+				txh.Fee = txh.Fee + uint64(*txh.NodeFee)
+			}
 			if order == "desc" {
 				txhs = append(txhs.(types.TransactionHistorySorterDesc), txh)
 			} else {
