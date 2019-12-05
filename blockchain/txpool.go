@@ -10,10 +10,8 @@ import (
 	"github.com/elastos/Elastos.ELA/common"
 	"github.com/elastos/Elastos.ELA/common/log"
 	. "github.com/elastos/Elastos.ELA/core/types"
-	"github.com/elastos/Elastos.ELA/core/types/outputpayload"
 	"github.com/elastos/Elastos.ELA/core/types/payload"
 	"github.com/elastos/Elastos.ELA/crypto"
-	"io"
 	"strconv"
 	"strings"
 	"sync"
@@ -136,20 +134,7 @@ func (m *MemPool) AppendToMemPool(tx *Transaction) error {
 	}
 	receive := make(map[common.Uint168]int64)
 	var totalOutput int64 = 0
-	vote := outputpayload.VoteOutput{}
 	for i, output := range tx.Outputs {
-		outputPayload := output.Payload
-		if tx.TxType != types.Vote && outputPayload != nil && outputPayload.Validate() == nil {
-			var buf bytes.Buffer
-			err := outputPayload.Deserialize(&buf)
-			if err == nil || err == io.EOF {
-				err = vote.Serialize(&buf)
-				if err == nil || err == io.EOF {
-					tx.TxType = types.Vote
-				}
-			}
-		}
-
 		address, _ := output.ProgramHash.ToAddress()
 		var valueCross int64
 		if isCrossTx == true && (output.ProgramHash == MINING_ADDR || strings.Index(address, "X") == 0 || address == "4oLvT2") {
