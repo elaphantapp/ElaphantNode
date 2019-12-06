@@ -103,11 +103,11 @@ func (m *MemPool) AppendToMemPool(tx *Transaction) error {
 	}
 
 	isCrossTx := false
-	if tx.TxType == TransferCrossChainAsset {
+	if tx_type == TransferCrossChainAsset {
 		isCrossTx = true
 	}
 	if m.isVoteTx(tx) {
-		tx.TxType = types.Vote
+		tx_type = types.Vote
 	}
 	spend := make(map[common.Uint168]int64)
 	var totalInput int64 = 0
@@ -196,7 +196,7 @@ func (m *MemPool) AppendToMemPool(tx *Transaction) error {
 		txh.Value = uint64(value)
 		txh.Address = k
 		txh.Inputs = from
-		txh.TxType = tx.TxType
+		txh.TxType = tx_type
 		txh.Txid = tx.Hash()
 		txh.Height = 0
 		txh.CreateTime = 0
@@ -219,7 +219,7 @@ func (m *MemPool) AppendToMemPool(tx *Transaction) error {
 		txh.Value = uint64(r)
 		txh.Address = k
 		txh.Inputs = []common.Uint168{k}
-		txh.TxType = tx.TxType
+		txh.TxType = tx_type
 		txh.Txid = tx.Hash()
 		txh.Height = 0
 		txh.CreateTime = 0
@@ -244,7 +244,6 @@ func (m *MemPool) AppendToMemPool(tx *Transaction) error {
 			return err
 		}
 	}
-	tx.TxType = tx_type
 	return nil
 }
 

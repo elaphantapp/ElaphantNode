@@ -252,7 +252,6 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 		dposReward := make(map[common2.Uint168]common2.Fixed64)
 		for i := 0; i < len(txs); i++ {
 			tx := txs[i]
-			var tx_type = tx.TxType
 			txid, err := common.ReverseHexString(tx.Hash().String())
 			if err != nil {
 				return err
@@ -261,7 +260,7 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 			var signedAddress string
 			var node_fee common2.Fixed64
 			var node_output_index uint64 = 999999
-
+			var tx_type = tx.TxType
 			for _, attr := range tx.Attributes {
 				if attr.Usage == Memo {
 					memo = attr.Data
@@ -327,7 +326,7 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 				}
 			}
 
-			if tx.TxType == CoinBase {
+			if tx_type == CoinBase {
 				var to []common2.Uint168
 				hold := make(map[common2.Uint168]uint64)
 				txhscoinbase := make([]types.TransactionHistory, 0)
@@ -337,7 +336,7 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 						txh := types.TransactionHistory{}
 						txh.Address = vout.ProgramHash
 						txh.Inputs = []common2.Uint168{MINING_ADDR}
-						txh.TxType = tx.TxType
+						txh.TxType = tx_type
 						txh.Txid = tx.Hash()
 						txh.Height = uint64(block.Height)
 						txh.CreateTime = uint64(block.Header.Timestamp)
@@ -372,11 +371,11 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 				}
 
 				isCrossTx := false
-				if tx.TxType == TransferCrossChainAsset {
+				if tx_type == TransferCrossChainAsset {
 					isCrossTx = true
 				}
 				if voteTxHolder[txid] == types.Vote {
-					tx.TxType = types.Vote
+					tx_type = types.Vote
 				}
 				spend := make(map[common2.Uint168]int64)
 				var totalInput int64 = 0
@@ -465,7 +464,7 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 					txh.Value = uint64(value)
 					txh.Address = k
 					txh.Inputs = from
-					txh.TxType = tx.TxType
+					txh.TxType = tx_type
 					txh.Txid = tx.Hash()
 					txh.Height = uint64(block.Height)
 					txh.CreateTime = uint64(block.Header.Timestamp)
@@ -487,7 +486,7 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 					txh.Value = uint64(r)
 					txh.Address = k
 					txh.Inputs = []common2.Uint168{k}
-					txh.TxType = tx.TxType
+					txh.TxType = tx_type
 					txh.Txid = tx.Hash()
 					txh.Height = uint64(block.Height)
 					txh.CreateTime = uint64(block.Header.Timestamp)
@@ -504,7 +503,6 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 					txhs = append(txhs, txh)
 				}
 			}
-			tx.TxType = tx_type
 		}
 		c.persistTransactionHistory(txhs)
 		c.persistPbks(pubks)
