@@ -28,9 +28,12 @@ type MemPool struct {
 }
 
 func (m *MemPool) AppendToMemPool(tx *Transaction) error {
+	m.l.RLock()
 	if _, ok := m.is_p[tx.Hash()]; ok {
+		m.l.RUnlock()
 		return nil
 	}
+	m.l.RUnlock()
 	txhs := make([]types.TransactionHistory, 0)
 	var signedAddress string
 	var node_fee common.Fixed64
