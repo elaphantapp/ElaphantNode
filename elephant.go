@@ -8,7 +8,6 @@ import (
 	blockchain2 "github.com/elastos/Elastos.ELA.Elephant.Node/blockchain"
 	common2 "github.com/elastos/Elastos.ELA.Elephant.Node/cmd/common"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/common"
-	crstate "github.com/elastos/Elastos.ELA/cr/state"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/servers"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/servers/httpjsonrpc"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/servers/httpnodeinfo"
@@ -16,6 +15,7 @@ import (
 	"github.com/elastos/Elastos.ELA.Elephant.Node/servers/httpwebsocket"
 	common3 "github.com/elastos/Elastos.ELA/common"
 	"github.com/elastos/Elastos.ELA/common/config"
+	crstate "github.com/elastos/Elastos.ELA/cr/state"
 	"github.com/elastos/Elastos.ELA/utils"
 	"github.com/elastos/Elastos.ELA/wallet"
 	"github.com/howeyc/gopass"
@@ -27,7 +27,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/elastos/Elastos.ELA.Elephant.Node/elanet"
 	"github.com/elastos/Elastos.ELA/blockchain"
 	cmdcom "github.com/elastos/Elastos.ELA/cmd/common"
 	"github.com/elastos/Elastos.ELA/common/log"
@@ -37,6 +36,7 @@ import (
 	dlog "github.com/elastos/Elastos.ELA/dpos/log"
 	"github.com/elastos/Elastos.ELA/dpos/state"
 	"github.com/elastos/Elastos.ELA/dpos/store"
+	"github.com/elastos/Elastos.ELA/elanet"
 	"github.com/elastos/Elastos.ELA/elanet/routes"
 	"github.com/elastos/Elastos.ELA/mempool"
 	"github.com/elastos/Elastos.ELA/p2p"
@@ -210,15 +210,10 @@ func startNode(c *cli.Context, st *settings) {
 	committee := crstate.NewCommittee(st.Params())
 	ledger.Committee = committee
 
-	chain, err := blockchain.New(chainStore, st.Params(), arbiters.State,committee)
+	chain, err := blockchain.New(chainStore, st.Params(), arbiters.State, committee)
 	if err != nil {
 		printErrorAndExit(err)
 	}
-	if err := chain.InitFFLDBFromChainStore(interrupt.C, pgBar.Start,
-		pgBar.Increase, false); err != nil {
-		printErrorAndExit(err)
-	}
-	pgBar.Stop()
 	var chainStoreEx blockchain2.IChainStoreExtend
 	chainStoreEx, err = blockchain2.NewChainStoreEx(chain, chainStore, filepath.Join(dataDir, "ext"))
 	if err != nil {
@@ -226,6 +221,18 @@ func startNode(c *cli.Context, st *settings) {
 	}
 	defer chainStore.Close()
 	defer chainStoreEx.CloseEx()
+	if err := chain.InitFFLDBFromChainStore(interrupt.C, pgBar.Start,
+		pgBar.Increase, false); err != nil {
+		printErrorAndExit(err)
+	}
+	pgBar.Stop()
+	//var chainStoreEx blockchain2.IChainStoreExtend
+	//chainStoreEx, err = blockchain2.NewChainStoreEx(chain, chainStore, filepath.Join(dataDir, "ext"))
+	//if err != nil {
+	//	printErrorAndExit(err)
+	//}
+	//defer chainStore.Close()
+	//defer chainStoreEx.CloseEx()
 
 	ledger.Blockchain = chain // fixme
 	blockMemPool.Chain = chain
@@ -334,21 +341,21 @@ func startNode(c *cli.Context, st *settings) {
 	log.Info("Start the P2P networks")
 	server.Start()
 	defer server.Stop()
-
-	log.Info("Start services")
-	if st.Config().EnableRPC {
-		go httpjsonrpc.StartRPCServer()
+	if !PureSync {
+		log.Info("Start services")
+		if st.Config().EnableRPC {
+			go httpjsonrpc.StartRPCServer()
+		}
+		if st.Config().HttpRestStart {
+			go httprestful.StartServer()
+		}
+		if st.Config().HttpWsStart {
+			go httpwebsocket.Start()
+		}
+		if st.Config().HttpInfoStart {
+			go httpnodeinfo.StartServer()
+		}
 	}
-	if st.Config().HttpRestStart {
-		go httprestful.StartServer()
-	}
-	if st.Config().HttpWsStart {
-		go httpwebsocket.Start()
-	}
-	if st.Config().HttpInfoStart {
-		go httpnodeinfo.StartServer()
-	}
-
 	go printSyncState(chain, server)
 
 	waitForSyncFinish(server, interrupt.C)
@@ -412,7 +419,6 @@ func printSyncState(bc *blockchain.BlockChain, server elanet.Server) {
 		statlog.Info(buf.String())
 	}
 }
-
 
 func nodeInfo(c *cli.Context, st *settings) {
 	if !PureSync {

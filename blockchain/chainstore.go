@@ -16,6 +16,7 @@ import (
 	"github.com/elastos/Elastos.ELA/core/types/outputpayload"
 	"github.com/elastos/Elastos.ELA/core/types/payload"
 	"github.com/elastos/Elastos.ELA/crypto"
+	"github.com/elastos/Elastos.ELA/events"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/robfig/cron"
 	"sort"
@@ -89,7 +90,20 @@ func NewChainStoreEx(chain *BlockChain, chainstore IChainStore, filePath string)
 	}
 	go c.loop()
 	go c.initTask()
-
+	events.Subscribe(func(e *events.Event) {
+		switch e.Type {
+		case events.ETBlockConnected:
+			b, ok := e.Data.(*Block)
+			if ok {
+				go DefaultChainStoreEx.AddTask(b)
+			}
+		case events.ETTransactionAccepted:
+			tx, ok := e.Data.(*Transaction)
+			if ok {
+				go DefaultMemPool.AppendToMemPool(tx)
+			}
+		}
+	})
 	return c, nil
 }
 
