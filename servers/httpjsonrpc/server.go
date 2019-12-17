@@ -1,3 +1,8 @@
+// Copyright (c) 2017-2019 The Elastos Foundation
+// Use of this source code is governed by an MIT
+// license that can be found in the LICENSE file.
+//
+
 package httpjsonrpc
 
 import (
@@ -12,10 +17,10 @@ import (
 	"strconv"
 	"time"
 
-	. "github.com/elastos/Elastos.ELA.Elephant.Node/servers"
 	"github.com/elastos/Elastos.ELA/common/config"
 	"github.com/elastos/Elastos.ELA/common/log"
 	elaErr "github.com/elastos/Elastos.ELA/errors"
+	. "github.com/elastos/Elastos.ELA/servers"
 )
 
 //an instance of the multiplexer
@@ -33,6 +38,9 @@ const (
 	// IOTimeout is the maximum duration for JSON-RPC reading or writing
 	// timeout.
 	IOTimeout = 60 * time.Second
+
+	// MaxRPCRead is the maximum buffer size for reading request.
+	MaxRPCRead = 1024 * 1024 * 8
 )
 
 func StartRPCServer() {
@@ -56,10 +64,14 @@ func StartRPCServer() {
 	mainMux["getblockcount"] = GetBlockCount
 	mainMux["getblockbyheight"] = GetBlockByHeight
 	mainMux["getexistwithdrawtransactions"] = GetExistWithdrawTransactions
-	mainMux["listunspent"] = ListUnspent
-	mainMux["getutxosbyamount"] = GetUTXOsByAmount
-	mainMux["getamountbyinputs"] = GetAmountByInputs
 	mainMux["getreceivedbyaddress"] = GetReceivedByAddress
+	// wallet interfaces
+	mainMux["getamountbyinputs"] = GetAmountByInputs
+	mainMux["getutxosbyamount"] = GetUTXOsByAmount
+	mainMux["listunspent"] = ListUnspent
+	mainMux["createrawtransaction"] = CreateRawTransaction
+	mainMux["decoderawtransaction"] = DecodeRawTransaction
+	mainMux["signrawtransactionwithkey"] = SignRawTransactionWithKey
 	// aux interfaces
 	mainMux["help"] = AuxHelp
 	mainMux["submitauxblock"] = SubmitAuxBlock
@@ -68,6 +80,9 @@ func StartRPCServer() {
 	mainMux["getmininginfo"] = GetMiningInfo
 	mainMux["togglemining"] = ToggleMining
 	mainMux["discretemining"] = DiscreteMining
+	//cr interfaces
+	mainMux["listcrcandidates"] = ListCRCandidates
+	mainMux["listcurrentcrs"] = ListCurrentCRs
 	// vote interfaces
 	mainMux["listproducers"] = ListProducers
 	mainMux["producerstatus"] = ProducerStatus
@@ -78,6 +93,7 @@ func StartRPCServer() {
 
 	mainMux["estimatesmartfee"] = EstimateSmartFee
 	mainMux["getdepositcoin"] = GetDepositCoin
+	mainMux["getcrdepositcoin"] = GetCRDepositCoin
 	mainMux["getarbitersinfo"] = GetArbitersInfo
 
 	rpcServeMux := http.NewServeMux()
@@ -87,8 +103,12 @@ func StartRPCServer() {
 		WriteTimeout: IOTimeout,
 	}
 	rpcServeMux.HandleFunc("/", Handle)
-	l, _ := net.Listen("tcp4", ":"+strconv.Itoa(config.Parameters.HttpJsonPort))
-	err := server.Serve(l)
+	l, err := net.Listen("tcp4", ":"+strconv.Itoa(config.Parameters.HttpJsonPort))
+	if err != nil {
+		log.Fatal("Create listener error: ", err.Error())
+		return
+	}
+	err = server.Serve(l)
 	if err != nil {
 		log.Fatal("ListenAndServe error: ", err.Error())
 	}
@@ -97,51 +117,55 @@ func StartRPCServer() {
 //this is the function that should be called in order to answer an rpc call
 //should be registered like "http.AddMethod("/", httpjsonrpc.Handle)"
 func Handle(w http.ResponseWriter, r *http.Request) {
-
-	//JSON RPC commands should be POSTs
 	isClientAllowed := clientAllowed(r)
 	if !isClientAllowed {
-		log.Warn("HTTP Client ip is not allowd")
-		http.Error(w, "Client ip is not allowd", http.StatusForbidden)
+		log.Warn("Client ip is not allowed")
+		RPCError(w, http.StatusForbidden, InternalError, "Client ip is not allowed")
 		return
 	}
 
+	// JSON RPC commands should be POSTs
 	if r.Method != "POST" {
-		log.Warn("HTTP JSON RPC Handle - Method!=\"POST\"")
-		http.Error(w, "JSON RPC protocol only allows POST method", http.StatusMethodNotAllowed)
+		log.Warn("JSON-RPC Handle - Method!=\"POST\"")
+		RPCError(w, http.StatusMethodNotAllowed, InternalError, "JSON-RPC protocol only allows POST method")
 		return
 	}
 	contentType, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if contentType != "application/json" {
-		http.Error(w, "need content type to be application/json", http.StatusUnsupportedMediaType)
+		RPCError(w, http.StatusUnsupportedMediaType, InternalError, "JSON-RPC need content type to be application/json")
 		return
 	}
 
 	isCheckAuthOk := checkAuth(r)
 	if !isCheckAuthOk {
-		log.Warn("client authenticate failed")
-		RPCError(w, http.StatusUnauthorized, InternalError, "client authenticate failed")
+		log.Warn("Client authenticate failed")
+		RPCError(w, http.StatusUnauthorized, InternalError, "Client authenticate failed")
 		return
 	}
 
 	//read the body of the request
-	body, _ := ioutil.ReadAll(r.Body)
+	body, err := ioutil.ReadAll(http.MaxBytesReader(w, r.Body, MaxRPCRead))
+	if err != nil {
+		RPCError(w, http.StatusBadRequest, InvalidRequest, "JSON-RPC request reading error:"+err.Error())
+		return
+	}
+
 	request := make(map[string]interface{})
-	error := json.Unmarshal(body, &request)
-	if error != nil {
-		log.Error("HTTP JSON RPC Handle - json.Unmarshal: ", error)
-		RPCError(w, http.StatusBadRequest, ParseError, "rpc json parse error:"+error.Error())
+	err = json.Unmarshal(body, &request)
+	if err != nil {
+		log.Error("JSON-RPC request parsing error: ", err)
+		RPCError(w, http.StatusBadRequest, ParseError, "JSON-RPC request parsing error:"+err.Error())
 		return
 	}
 	//get the corresponding function
 	requestMethod, ok := request["method"].(string)
 	if !ok {
-		RPCError(w, http.StatusBadRequest, InvalidRequest, "need a method!")
+		RPCError(w, http.StatusBadRequest, InvalidRequest, "JSON-RPC need a method")
 		return
 	}
 	method, ok := mainMux[requestMethod]
 	if !ok {
-		RPCError(w, http.StatusNotFound, MethodNotFound, "method "+requestMethod+" not found")
+		RPCError(w, http.StatusNotFound, MethodNotFound, "JSON-RPC method "+requestMethod+" not found")
 		return
 	}
 
@@ -162,11 +186,9 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Debug("RPC method:", requestMethod)
-	log.Debug("RPC params:", params)
 
 	response := method(params)
 	var data []byte
-	data, _ = json.Marshal(response)
 	if response["Error"] != elaErr.ErrCode(0) {
 		data, _ = json.Marshal(map[string]interface{}{
 			"jsonrpc": "2.0",

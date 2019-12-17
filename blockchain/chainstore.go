@@ -144,9 +144,7 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 						continue
 					}
 					contents := payload.Contents
-					if !ok {
-						continue
-					}
+					voteVersion := payload.Version
 					value := v.Value.String()
 					address, err := v.ProgramHash.ToAddress()
 					if err != nil {
@@ -161,12 +159,15 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 						} else if votetype == 0x01 {
 							votetypeStr = "CRC"
 						}
-						candidates := cv.Candidates
-						for _, pub := range candidates {
-							_, err := stmt.Exec(common2.BytesToHexString(pub), votetypeStr, txid, n, value, outputlock, address, block.Header.Timestamp, block.Header.Height)
+						for _, candidate := range cv.CandidateVotes {
+							if voteVersion == outputpayload.VoteProducerAndCRVersion {
+								value = candidate.Votes.String()
+							}
+							_, err := stmt.Exec(common2.BytesToHexString(candidate.Candidate), votetypeStr, txid, n, value, outputlock, address, block.Header.Timestamp, block.Header.Height)
 							if err != nil {
 								return err
 							}
+
 							(*voteTxHolder)[txid] = types.Vote
 						}
 					}

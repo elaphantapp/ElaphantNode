@@ -1,3 +1,8 @@
+// Copyright (c) 2017-2019 The Elastos Foundation
+// Use of this source code is governed by an MIT
+// license that can be found in the LICENSE file.
+//
+
 package servers
 
 import (
@@ -33,11 +38,6 @@ func (p Params) Int(field string) (int64, bool) {
 	default:
 		return 0, false
 	}
-}
-
-func (p Params) HasKey(field string) bool {
-	_, ok := p[field]
-	return ok
 }
 
 func (p Params) Uint(field string) (uint32, bool) {
@@ -130,4 +130,9 @@ func (p Params) ArrayString(key string) ([]string, bool) {
 	default:
 		return nil, false
 	}
+}
+
+func (p Params) HasKey(field string) bool {
+	_, ok := p[field]
+	return ok
 }
