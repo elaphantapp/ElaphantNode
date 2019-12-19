@@ -1,22 +1,29 @@
+// Copyright (c) 2017-2019 The Elastos Foundation
+// Use of this source code is governed by an MIT
+// license that can be found in the LICENSE file.
+//
+
 package main
 
 import (
 	"fmt"
-	"github.com/cheggaaa/pb"
-	"github.com/elastos/Elastos.ELA/elanet/routes"
-	"github.com/urfave/cli"
 	"io"
 	"path/filepath"
 	"time"
 
 	"github.com/elastos/Elastos.ELA/common/log"
+	crstate "github.com/elastos/Elastos.ELA/cr/state"
 	"github.com/elastos/Elastos.ELA/dpos/state"
 	"github.com/elastos/Elastos.ELA/elanet"
 	"github.com/elastos/Elastos.ELA/elanet/netsync"
 	"github.com/elastos/Elastos.ELA/elanet/peer"
+	"github.com/elastos/Elastos.ELA/elanet/routes"
 	"github.com/elastos/Elastos.ELA/p2p/addrmgr"
 	"github.com/elastos/Elastos.ELA/p2p/connmgr"
 	"github.com/elastos/Elastos.ELA/utils/elalog"
+
+	"github.com/urfave/cli"
+	"gopkg.in/cheggaaa/pb.v1"
 )
 
 type logWrapper struct {
@@ -162,20 +169,22 @@ var (
 )
 
 // The default amount of logging is none.
-func setupLog(c *cli.Context) {
+func setupLog(c *cli.Context, s *settings) {
 	flagDataDir := c.String("datadir")
 	path := filepath.Join(flagDataDir, nodeLogPath)
 
-	logger = log.NewDefault(path, uint8(cfg.PrintLevel), cfg.MaxPerLogSize, cfg.MaxLogsSize)
+	logger = log.NewDefault(path, uint8(s.Config().PrintLevel),
+		s.Config().MaxPerLogSize, s.Config().MaxLogsSize)
 	pgBar = newProgress(logger.Writer())
 
 	admrlog := wrap(logger, elalog.LevelOff)
 	cmgrlog := wrap(logger, elalog.LevelOff)
-	synclog := wrap(logger, cfg.PrintLevel)
-	peerlog := wrap(logger, cfg.PrintLevel)
-	routlog := wrap(logger, cfg.PrintLevel)
-	elanlog := wrap(logger, cfg.PrintLevel)
-	statlog := wrap(logger, cfg.PrintLevel)
+	synclog := wrap(logger, s.Config().PrintLevel)
+	peerlog := wrap(logger, s.Config().PrintLevel)
+	routlog := wrap(logger, s.Config().PrintLevel)
+	elanlog := wrap(logger, s.Config().PrintLevel)
+	statlog := wrap(logger, s.Config().PrintLevel)
+	crstatlog := wrap(logger, s.Config().PrintLevel)
 
 	addrmgr.UseLogger(admrlog)
 	connmgr.UseLogger(cmgrlog)
@@ -184,4 +193,5 @@ func setupLog(c *cli.Context) {
 	routes.UseLogger(routlog)
 	elanet.UseLogger(elanlog)
 	state.UseLogger(statlog)
+	crstate.UseLogger(crstatlog)
 }

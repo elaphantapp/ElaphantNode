@@ -16,6 +16,7 @@ import (
 	"github.com/elastos/Elastos.ELA/core/types/outputpayload"
 	"github.com/elastos/Elastos.ELA/core/types/payload"
 	"github.com/elastos/Elastos.ELA/crypto"
+	"github.com/elastos/Elastos.ELA/events"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/robfig/cron"
 	"sort"
@@ -89,7 +90,20 @@ func NewChainStoreEx(chain *BlockChain, chainstore IChainStore, filePath string)
 	}
 	go c.loop()
 	go c.initTask()
-
+	events.Subscribe(func(e *events.Event) {
+		switch e.Type {
+		case events.ETBlockConnected:
+			b, ok := e.Data.(*Block)
+			if ok {
+				go DefaultChainStoreEx.AddTask(b)
+			}
+		case events.ETTransactionAccepted:
+			tx, ok := e.Data.(*Transaction)
+			if ok {
+				go DefaultMemPool.AppendToMemPool(tx)
+			}
+		}
+	})
 	return c, nil
 }
 
@@ -144,9 +158,7 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 						continue
 					}
 					contents := payload.Contents
-					if !ok {
-						continue
-					}
+					voteVersion := payload.Version
 					value := v.Value.String()
 					address, err := v.ProgramHash.ToAddress()
 					if err != nil {
@@ -161,12 +173,15 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 						} else if votetype == 0x01 {
 							votetypeStr = "CRC"
 						}
-						candidates := cv.Candidates
-						for _, pub := range candidates {
-							_, err := stmt.Exec(common2.BytesToHexString(pub), votetypeStr, txid, n, value, outputlock, address, block.Header.Timestamp, block.Header.Height)
+						for _, candidate := range cv.CandidateVotes {
+							if voteVersion == outputpayload.VoteProducerAndCRVersion {
+								value = candidate.Votes.String()
+							}
+							_, err := stmt.Exec(common2.BytesToHexString(candidate.Candidate), votetypeStr, txid, n, value, outputlock, address, block.Header.Timestamp, block.Header.Height)
 							if err != nil {
 								return err
 							}
+
 							(*voteTxHolder)[txid] = types.Vote
 						}
 					}
