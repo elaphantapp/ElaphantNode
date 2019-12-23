@@ -139,12 +139,19 @@ func (d *Dba) ToString(sql string) (string, error) {
 func InitDb(db *Dba) error {
 	createTableSqlStmtArr := []string{
 		`PRAGMA encoding = "UTF-8";`,
-		`CREATE TABLE IF not exists  chain_vote_info (_id INTEGER primary key, producer_public_key varchar(66) not null, vote_type varchar(24) not null, txid varchar(64) not null, n INTEGER not null, value varchar(24) not null, outputlock INTEGER not null, address varchar(34) not null,block_time INTEGER not null, height INTEGER not null,is_valid varchar(10) DEFAULT 'YES', cancel_height INTEGER)`,
-		`CREATE INDEX IF not exists  idx_chain_vote_info_address ON chain_vote_info (address);`,
+		`CREATE TABLE IF not exists chain_vote_info (_id INTEGER primary key, producer_public_key varchar(66) not null, vote_type varchar(24) not null, txid varchar(64) not null, n INTEGER not null, value varchar(24) not null, outputlock INTEGER not null, address varchar(34) not null,block_time INTEGER not null, height INTEGER not null,is_valid varchar(10) DEFAULT 'YES', cancel_height INTEGER)`,
+		`CREATE INDEX IF not exists idx_chain_vote_info_address ON chain_vote_info (address);`,
 		`CREATE INDEX IF not exists idx_chain_vote_info_producer_public_key ON chain_vote_info (producer_public_key);`,
 		"CREATE TABLE IF not exists chain_producer_info (_id INTEGER PRIMARY KEY,ownerpublickey varchar(66) NOT NULL,nodepublickey varchar(66) NOT NULL,nickname text  NOT NULL,url varchar(256)  NOT NULL,location INTEGER NOT NULL,active INTEGER NOT NULL,votes varchar(24)  NOT NULL,netaddress varchar(124)  NOT NULL,state varchar(24)  NOT NULL,registerheight INTEGER NOT NULL,cancelheight INTEGER NOT NULL,inactiveheight INTEGER NOT NULL,illegalheight INTEGER NOT NULL, `index` INTEGER NOT NULL)",
 		`CREATE INDEX IF not exists idx_chain_producer_info ON chain_producer_info (ownerpublickey);`,
 		`CREATE INDEX IF not exists idx_chain_vote_info_txid_n ON chain_vote_info (txid,n);`,
+
+		`CREATE TABLE IF not exists chain_vote_cr_info (_id INTEGER primary key, did varchar(42) not null, vote_type varchar(24) not null, txid varchar(64) not null, n INTEGER not null, value varchar(24) not null, outputlock INTEGER not null, address varchar(34) not null,block_time INTEGER not null, height INTEGER not null,is_valid varchar(10) DEFAULT 'YES', cancel_height INTEGER)`,
+		`CREATE INDEX IF not exists idx_chain_vote_cr_info_address ON chain_vote_cr_info (address);`,
+		`CREATE INDEX IF not exists idx_chain_vote_cr_info_producer_public_key ON chain_vote_cr_info (did);`,
+		"CREATE TABLE IF not exists chain_cr_candidate_info (_id INTEGER PRIMARY KEY,code varchar(70) NOT NULL,did varchar(34) NOT NULL,nickname text  NOT NULL,url varchar(256)  NOT NULL,location INTEGER NOT NULL,state varchar(20) NOT NULL,votes varchar(24)  NOT NULL,`index` INTEGER NOT NULL)",
+		`CREATE INDEX IF not exists idx_chain_producer_info ON chain_cr_candidate_info (did);`,
+		`CREATE INDEX IF not exists idx_chain_vote_cr_info_txid_n ON chain_vote_cr_info (txid,n);`,
 	}
 
 	r, err := db.Query(`SELECT name FROM sqlite_master WHERE name=?`, "chain_producer_info")
