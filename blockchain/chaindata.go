@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"bytes"
+	"encoding/hex"
 	common2 "github.com/elastos/Elastos.ELA.Elephant.Node/common"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/core/types"
 	"github.com/elastos/Elastos.ELA/common"
@@ -244,7 +245,7 @@ func (c *ChainStoreExtend) renewCrCandidates() {
 		db, err := DBA.Begin()
 		defer func() {
 			if err != nil {
-				log.Errorf("Error renew producer %s", err.Error())
+				log.Errorf("Error renew renewCrCandidates %s", err.Error())
 				db.Rollback()
 			} else {
 				db.Commit()
@@ -263,14 +264,14 @@ func (c *ChainStoreExtend) renewCrCandidates() {
 		}
 		stmt1.Close()
 
-		stmt, err := db.Prepare("insert into chain_cr_candidate_info (did ,nickname ,url ,location ,state ,votes ,`index` ) values(?,?,?,?,?,?,?)")
+		stmt, err := db.Prepare("insert into chain_cr_candidate_info (code, did ,nickname ,url ,location ,state ,votes ,`index` ) values(?,?,?,?,?,?,?,?)")
 		if err != nil {
 			return
 		}
 		cands := c.chain.GetCRCommittee().GetState().GetAllCandidates()
 		for i, can := range cands {
 			did, _ := can.Info().DID.ToAddress()
-			_, err = stmt.Exec(did, can.Info().NickName, can.Info().Url, can.Info().Location, can.State().String(), can.Votes().String(), i)
+			_, err = stmt.Exec(hex.EncodeToString(can.Info().Code) , did, can.Info().NickName, can.Info().Url, can.Info().Location, can.State().String(), can.Votes().String(), i)
 			if err != nil {
 				log.Errorf("%s \n", err.Error())
 				return
