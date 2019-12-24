@@ -5,8 +5,10 @@ import (
 	common2 "github.com/elastos/Elastos.ELA.Elephant.Node/common"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/core/types"
 	"github.com/elastos/Elastos.ELA/common"
+	"github.com/elastos/Elastos.ELA/common/config"
 	"github.com/elastos/Elastos.ELA/common/log"
 	"github.com/elastos/Elastos.ELA/dpos/state"
+	"strings"
 )
 
 var i *int = common2.NewInt(-1)
@@ -223,6 +225,54 @@ func (c *ChainStoreExtend) renewProducer() {
 				producer.Info().NetAddress, producer.State().String(), producer.RegisterHeight(), producer.CancelHeight(),
 				producer.InactiveSince(), producer.IllegalHeight(), i)
 			if err != nil {
+				return
+			}
+		}
+		stmt.Close()
+	}
+}
+
+func (c *ChainStoreExtend) renewCrCandidates() {
+	var cRVotingStartHeight = 537670
+	if "testnet" == strings.ToLower(config.Parameters.ActiveNet) {
+		cRVotingStartHeight = 436900
+	} else if "regnet" == strings.ToLower(config.Parameters.ActiveNet) {
+		cRVotingStartHeight = 292000
+	}
+	if DefaultChainStoreEx.GetHeight() >= uint32(cRVotingStartHeight) {
+		var err error
+		db, err := DBA.Begin()
+		defer func() {
+			if err != nil {
+				log.Errorf("Error renew producer %s", err.Error())
+				db.Rollback()
+			} else {
+				db.Commit()
+			}
+		}()
+		if err != nil {
+			return
+		}
+		stmt1, err := db.Prepare("delete from chain_cr_candidate_info")
+		if err != nil {
+			return
+		}
+		_, err = stmt1.Exec()
+		if err != nil {
+			return
+		}
+		stmt1.Close()
+
+		stmt, err := db.Prepare("insert into chain_cr_candidate_info (did ,nickname ,url ,location ,state ,votes ,`index` ) values(?,?,?,?,?,?,?)")
+		if err != nil {
+			return
+		}
+		cands := c.chain.GetCRCommittee().GetState().GetAllCandidates()
+		for i, can := range cands {
+			did, _ := can.Info().DID.ToAddress()
+			_, err = stmt.Exec(did, can.Info().NickName, can.Info().Url, can.Info().Location, can.State().String(), can.Votes().String(), i)
+			if err != nil {
+				log.Errorf("%s \n", err.Error())
 				return
 			}
 		}

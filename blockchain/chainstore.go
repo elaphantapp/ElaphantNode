@@ -132,6 +132,7 @@ func (c *ChainStoreExtend) processVote(block *Block, voteTxHolder *map[string]Tx
 	}
 	if len(c.rp) > 0 {
 		c.renewProducer()
+		c.renewCrCandidates()
 		<-c.rp
 	}
 	return nil
