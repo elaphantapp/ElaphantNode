@@ -1612,3 +1612,383 @@ return transaction if it exists in transaction pool or confirmed on a block
             }
           ]
         }
+
+
+Get cr candidate vote statistics
+------------------------------------------------
+cr candidate vote statistics of specific height
+
+.. http:get:: /api/v1/crc/did/(string:`did`)/(int:`height`)
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1/crc/did/iZAanbDCpnQxXEcan2hXgJ9hwvXj8dx8NX/9999999 HTTP/1.1
+      Host: localhost
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+        {
+          "result": [
+            {
+              "Did": "iZAanbDCpnQxXEcan2hXgJ9hwvXj8dx8NX",
+              "Vote_type": "CRC",
+              "Txid": "f3f8bb556133ca6549738344999b02cf95113ed8e2674f0655bc5571634a9a49",
+              "Value": "0.10000000",
+              "Address": "Eak7wVrSY9G8K2L253PrwHCr5AMv226Ge5",
+              "Block_time": 1573477535,
+              "Height": 317152
+            },
+            {
+              "Did": "iZAanbDCpnQxXEcan2hXgJ9hwvXj8dx8NX",
+              "Vote_type": "CRC",
+              "Txid": "e05bcbbc6985f53ee1343420bbf4a389d2e125823434c218926bdb53bc4eeae9",
+              "Value": "0.10000000",
+              "Address": "ERZxGjEfi4KBDyocvQArgCUf9tcGYRQ7K8",
+              "Block_time": 1573532655,
+              "Height": 317627
+            },
+            {
+              "Did": "iZAanbDCpnQxXEcan2hXgJ9hwvXj8dx8NX",
+              "Vote_type": "CRC",
+              "Txid": "918e572aab3f8402b61de70fa3ced01459410616ec13b012e23caf4a5996a8df",
+              "Value": "0.10000000",
+              "Address": "EXoX1raHYb2bzDh4UXhsgfCC2WXEXvypNn",
+              "Block_time": 1573550915,
+              "Height": 317776
+            },
+            {
+              "Did": "iZAanbDCpnQxXEcan2hXgJ9hwvXj8dx8NX",
+              "Vote_type": "CRC",
+              "Txid": "81d5fe9a3b585c34b0f93914d9974c40b7eb22db5400304b65575d222f4d631a",
+              "Value": "0.10000000",
+              "Address": "EYRi9SodjCmE9nJt5nn1Jao3KYPVHfjJBW",
+              "Block_time": 1573558912,
+              "Height": 317849
+            },
+            {
+              "Did": "iZAanbDCpnQxXEcan2hXgJ9hwvXj8dx8NX",
+              "Vote_type": "CRC",
+              "Txid": "4f67e3d6c69b6655af62f188a19dc280329ecd1bdf7bdc4fdde114ad88642379",
+              "Value": "0.10000000",
+              "Address": "EbTRRTPhD6k1VTLU31mVPhpzutVRh5sh4p",
+              "Block_time": 1573631364,
+              "Height": 318279
+            },
+            {
+              "Did": "iZAanbDCpnQxXEcan2hXgJ9hwvXj8dx8NX",
+              "Vote_type": "CRC",
+              "Txid": "4c3737a6ebaad991442514b6cbe7061235d2edef3b56a6ed4c73785084d45d9c",
+              "Value": "0.10000000",
+              "Address": "EYY4nVRnKLP8fsc8L4sPeNyeJkwx5NEjov",
+              "Block_time": 1573631920,
+              "Height": 318280
+            },
+            {
+              "Did": "iZAanbDCpnQxXEcan2hXgJ9hwvXj8dx8NX",
+              "Vote_type": "CRC",
+              "Txid": "d375eca3a1367932ecbf5464b002edb8b5be04ab16a4d48c92b1d4192a4dd752",
+              "Value": "0.10000000",
+              "Address": "EK11jSk42jJ5iRwSWYSb2XyvZHL6iEESbd",
+              "Block_time": 1573631920,
+              "Height": 318280
+            }
+          ],
+          "status": 200
+        }
+
+
+Get cr candidates voter's statistics
+------------------------------------------------
+cr candidates voter's statistics
+
+.. http:get:: /api/v1/crc/address/(string:`address`)?pageSize=(int:`pageSize`)&pageNum=(int:`pageNum`)
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1/crc/address/EbxU18T3M9ufnrkRY7NLt6sKyckDW4VAsA?pageNum=1&pageSize=2 HTTP/1.1
+      Host: localhost
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+        {
+          "result": [
+            {
+              "Vote_Header": {
+                "Value": "0.00001234",
+                "Candidate_num": 2,
+                "Txid": "4dda465d537b67048b3243e1ebb35e237204aae9a5ed27c7232850ebd6ea4e47",
+                "Height": 349794,
+                "Candidates": [
+                  "iXuss6uqEdaSB6aho9SpnLouu3EEaiBfsE",
+                  "ih1kcYd76SvHPsUrBM72xkAk5Htkhz7xv8"
+                ],
+                "Block_time": 1577415445,
+                "Is_valid": "NO"
+              },
+              "Vote_Body": [
+                {
+                  "Did": "iXuss6uqEdaSB6aho9SpnLouu3EEaiBfsE",
+                  "Value": "7334.45077953",
+                  "Rank": 2,
+                  "Code": "2103df458c3c68624e5fac2c4fdae8fec47f612d69a8217575ddc4ad49135286c70fac",
+                  "Nickname": "r_adr_us00",
+                  "Url": "https://54.223.244.60/bpinfo.json",
+                  "Location": 1441,
+                  "State": "Active",
+                  "Votes": "7336.57647854",
+                  "Index": 70
+                },
+                {
+                  "Did": "ih1kcYd76SvHPsUrBM72xkAk5Htkhz7xv8",
+                  "Value": "7613.51397119",
+                  "Rank": 1,
+                  "Code": "2103d69fe4f0348db20916848ba638355c2752e791ef0ab16722b5ba12ee6c93c01bac",
+                  "Nickname": "r_adr_us51",
+                  "Url": "www.r_adr_us51.com",
+                  "Location": 86,
+                  "State": "Active",
+                  "Votes": "7615.61967020",
+                  "Index": 139
+                }
+              ]
+            },
+            {
+              "Vote_Header": {
+                "Value": "0.00000617",
+                "Candidate_num": 2,
+                "Txid": "e5cac0f4aab0bb2ef1410a3c66fb47fe7a6970a0332814dd44d14bd42f7573c5",
+                "Height": 349791,
+                "Candidates": [
+                  "iXuss6uqEdaSB6aho9SpnLouu3EEaiBfsE",
+                  "ih1kcYd76SvHPsUrBM72xkAk5Htkhz7xv8"
+                ],
+                "Block_time": 1577414965,
+                "Is_valid": "NO"
+              },
+              "Vote_Body": [
+                {
+                  "Did": "iXuss6uqEdaSB6aho9SpnLouu3EEaiBfsE",
+                  "Value": "7334.45077336",
+                  "Rank": 2,
+                  "Code": "2103df458c3c68624e5fac2c4fdae8fec47f612d69a8217575ddc4ad49135286c70fac",
+                  "Nickname": "r_adr_us00",
+                  "Url": "https://54.223.244.60/bpinfo.json",
+                  "Location": 1441,
+                  "State": "Active",
+                  "Votes": "7336.57647854",
+                  "Index": 70
+                },
+                {
+                  "Did": "ih1kcYd76SvHPsUrBM72xkAk5Htkhz7xv8",
+                  "Value": "7613.51396502",
+                  "Rank": 1,
+                  "Code": "2103d69fe4f0348db20916848ba638355c2752e791ef0ab16722b5ba12ee6c93c01bac",
+                  "Nickname": "r_adr_us51",
+                  "Url": "www.r_adr_us51.com",
+                  "Location": 86,
+                  "State": "Active",
+                  "Votes": "7615.61967020",
+                  "Index": 139
+                }
+              ]
+            }
+          ],
+          "status": 200
+        }
+
+
+Get voted cr candidates of specific transactions
+------------------------------------------------
+
+.. http:post:: /api/v1/crc/transaction/producer
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+    POST /api/v1/crc/transaction/producer HTTP/1.1
+    Host: localhost
+
+      {
+          "txid":[
+            "ce75839c0dd20692d09e1aacff69f04cdbccc04a5da48588467527d2abda7e45",
+            "eb64cee1c62d4665ff19a5933bf8b246fcda8d40949a77ee5d1569141a0e8e7c"
+          ]
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+      {
+            "result": [
+                {
+                    "Producer": [
+                        {
+                            "Code": "2103d69fe4f0348db20916848ba638355c2752e791ef0ab16722b5ba12ee6c93c01bac",
+                            "Did": "ih1kcYd76SvHPsUrBM72xkAk5Htkhz7xv8",
+                            "Nickname": "r_adr_us51",
+                            "Url": "www.r_adr_us51.com",
+                            "Location": 86,
+                            "State": "Active",
+                            "Votes": "7615.61967020",
+                            "Index": 53
+                        },
+                        {
+                            "Code": "2103df458c3c68624e5fac2c4fdae8fec47f612d69a8217575ddc4ad49135286c70fac",
+                            "Did": "iXuss6uqEdaSB6aho9SpnLouu3EEaiBfsE",
+                            "Nickname": "r_adr_us00",
+                            "Url": "https://54.223.244.60/bpinfo.json",
+                            "Location": 1441,
+                            "State": "Active",
+                            "Votes": "7336.57647854",
+                            "Index": 159
+                        }
+                    ],
+                    "Txid": "ce75839c0dd20692d09e1aacff69f04cdbccc04a5da48588467527d2abda7e45"
+                },
+                {
+                    "Producer": [
+                        {
+                            "Code": "2103d69fe4f0348db20916848ba638355c2752e791ef0ab16722b5ba12ee6c93c01bac",
+                            "Did": "ih1kcYd76SvHPsUrBM72xkAk5Htkhz7xv8",
+                            "Nickname": "r_adr_us51",
+                            "Url": "www.r_adr_us51.com",
+                            "Location": 86,
+                            "State": "Active",
+                            "Votes": "7615.61967020",
+                            "Index": 53
+                        },
+                        {
+                            "Code": "2103df458c3c68624e5fac2c4fdae8fec47f612d69a8217575ddc4ad49135286c70fac",
+                            "Did": "iXuss6uqEdaSB6aho9SpnLouu3EEaiBfsE",
+                            "Nickname": "r_adr_us00",
+                            "Url": "https://54.223.244.60/bpinfo.json",
+                            "Location": 1441,
+                            "State": "Active",
+                            "Votes": "7336.57647854",
+                            "Index": 159
+                        }
+                    ],
+                    "Txid": "eb64cee1c62d4665ff19a5933bf8b246fcda8d40949a77ee5d1569141a0e8e7c"
+                }
+            ],
+            "status": 200
+      }
+
+
+Get cr candidates rank list
+------------------------------------------------
+rank list of cr candidates , state can be active , pending , canceled , returned , all
+
+    .. http:get:: /api/v1/crc/rank/height/(int:`height`)?state=all
+
+       **Example request**:
+
+       .. sourcecode:: http
+
+          GET /api/v1/crc/rank/height/99999999 HTTP/1.1
+          Host: localhost
+
+       **Example response**:
+
+       .. sourcecode:: http
+
+          HTTP/1.1 200 OK
+          Content-Type: application/json
+
+            {
+              "result": [
+                {
+                  "Did": "ih1kcYd76SvHPsUrBM72xkAk5Htkhz7xv8",
+                  "Value": "7615.6196702",
+                  "Rank": 1,
+                  "Code": "2103d69fe4f0348db20916848ba638355c2752e791ef0ab16722b5ba12ee6c93c01bac",
+                  "Nickname": "r_adr_us51",
+                  "Url": "www.r_adr_us51.com",
+                  "Location": 86,
+                  "State": "Active",
+                  "Votes": "7615.61967020",
+                  "Index": 116
+                },
+                {
+                  "Did": "iXuss6uqEdaSB6aho9SpnLouu3EEaiBfsE",
+                  "Value": "7336.57647854",
+                  "Rank": 2,
+                  "Code": "2103df458c3c68624e5fac2c4fdae8fec47f612d69a8217575ddc4ad49135286c70fac",
+                  "Nickname": "r_adr_us00",
+                  "Url": "https://54.223.244.60/bpinfo.json",
+                  "Location": 1441,
+                  "State": "Active",
+                  "Votes": "7336.57647854",
+                  "Index": 49
+                },
+                {
+                  "Did": "ic4MGQoJAcDMiv9LeqfnucPyNvVgaNQBBe",
+                  "Value": "7035.21015465",
+                  "Rank": 3,
+                  "Code": "2103b4957e9d55012fcec8f8b476bbe3b2243fe71ddfc858117ca26fee177d253a63ac",
+                  "Nickname": "crregisetcrZjcwN2NmYz",
+                  "Url": "https://blockchain.elastos.org",
+                  "Location": 100083,
+                  "State": "Active",
+                  "Votes": "7035.21015465",
+                  "Index": 5
+                },
+                {
+                  "Did": "ij9EiAgPbfsCK46VzYDqqWZfYUro6k7Ufi",
+                  "Value": "0",
+                  "Rank": 188,
+                  "Code": "2103a988e73eaca4b434361d33e92fbe7470f14b9e6ba21272e33363c47a7d5b54daac",
+                  "Nickname": "r_adr_us41",
+                  "Url": "www.r_adr_us41.com",
+                  "Location": 86,
+                  "State": "Returned",
+                  "Votes": "0",
+                  "Index": 183
+                }
+              ],
+              "status": 200
+          }
+
+Get cr candidates total vote of specific height
+------------------------------------------------
+total cr candidates vote of specific height
+
+.. http:get:: /api/v1/dpos/vote/height/(int:`height`)
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1/dpos/vote/height/241762 HTTP/1.1
+      Host: localhost
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+        {
+          "result":2468878.85555,
+          "status":200
+        }
