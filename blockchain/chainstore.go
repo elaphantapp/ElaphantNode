@@ -132,6 +132,7 @@ func (c *ChainStoreExtend) processVote(block *Block, voteTxHolder *map[string]Tx
 	}
 	if len(c.rp) > 0 {
 		c.renewProducer()
+		c.renewCrCandidates()
 		<-c.rp
 	}
 	return nil
@@ -150,6 +151,10 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 			stmt, err := db.Prepare("insert into chain_vote_info (producer_public_key,vote_type,txid,n,`value`,outputlock,address,block_time,height) values(?,?,?,?,?,?,?,?,?)")
 			if err != nil {
 				return err
+			}
+			stmt1, err1 := db.Prepare("insert into chain_vote_cr_info (did,vote_type,txid,n,`value`,outputlock,address,block_time,height) values(?,?,?,?,?,?,?,?,?)")
+			if err1 != nil {
+				return err1
 			}
 			for n, v := range vout {
 				if v.Type == 0x01 && v.AssetID == *ELA_ASSET {
@@ -177,7 +182,20 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 							if voteVersion == outputpayload.VoteProducerAndCRVersion {
 								value = candidate.Votes.String()
 							}
-							_, err := stmt.Exec(common2.BytesToHexString(candidate.Candidate), votetypeStr, txid, n, value, outputlock, address, block.Header.Timestamp, block.Header.Height)
+							var err error
+							if votetypeStr == "Delegate" {
+								_, err = stmt.Exec(common2.BytesToHexString(candidate.Candidate), votetypeStr, txid, n, value, outputlock, address, block.Header.Timestamp, block.Header.Height)
+							} else {
+								didbyte, err := common2.Uint168FromBytes(candidate.Candidate)
+								if err != nil {
+									return err
+								}
+								did, err := didbyte.ToAddress()
+								if err != nil {
+									return err
+								}
+								_, err = stmt1.Exec(did, votetypeStr, txid, n, value, outputlock, address, block.Header.Timestamp, block.Header.Height)
+							}
 							if err != nil {
 								return err
 							}
@@ -188,6 +206,7 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 				}
 			}
 			stmt.Close()
+			stmt1.Close()
 		}
 		// remove canceled vote
 		vin := tx.Inputs
@@ -196,6 +215,14 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 			return err
 		}
 		stmt, err := db.Prepare("update chain_vote_info set is_valid = 'NO',cancel_height=? where txid = ? and n = ? ")
+		if err != nil {
+			return err
+		}
+		prepStat1, err := db.Prepare("select * from chain_vote_cr_info where txid = ? and n = ?")
+		if err != nil {
+			return err
+		}
+		stmt1, err := db.Prepare("update chain_vote_cr_info set is_valid = 'NO',cancel_height=? where txid = ? and n = ? ")
 		if err != nil {
 			return err
 		}
@@ -212,8 +239,20 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 					return err
 				}
 			}
+
+			r1, err := prepStat1.Query(txhash, vout)
+			if err != nil {
+				return err
+			}
+			if r1.Next() {
+				_, err = stmt1.Exec(block.Header.Height, txhash, vout)
+				if err != nil {
+					return err
+				}
+			}
 		}
 		stmt.Close()
+		stmt1.Close()
 	}
 	return nil
 }

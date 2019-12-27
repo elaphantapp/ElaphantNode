@@ -2955,3 +2955,239 @@ func GetSpendUtxos(param Params) map[string]interface{} {
 func NodeRewardAddr(param Params) map[string]interface{} {
 	return ResponsePackEx(ELEPHANT_SUCCESS, config.Parameters.PowConfiguration.PayToAddr)
 }
+
+func CrDidStatistic(param Params) map[string]interface{} {
+	blockchain2.DefaultChainStoreEx.LockDposData()
+	defer blockchain2.DefaultChainStoreEx.UnlockDposData()
+	did, ok := param["did"].(string)
+	if !ok || did == "" || len(did) != 34 {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, " invalid cr did ")
+	}
+	height, ok := param["height"].(string)
+	var iHeight int
+	if !ok {
+		iHeight = 99999999
+	}
+	iHeight, err := strconv.Atoi(height)
+	if err != nil {
+		iHeight = 99999999
+	}
+	type ret struct {
+		Did        string `json:",omitempty"`
+		Vote_type  string `json:",omitempty"`
+		Txid       string `json:",omitempty"`
+		Value      string `json:",omitempty"`
+		Outputlock int    `json:",omitempty"`
+		Address    string `json:",omitempty"`
+		Block_time int64  `json:",omitempty"`
+		Height     int64  `json:",omitempty"`
+	}
+
+	rst, err := blockchain2.DBA.ToStruct("select Did,Vote_type,Txid,Value,Address,Block_time,Height from chain_vote_cr_info where did = '"+did+"' and (outputlock = 0 or outputlock >= height) and (cancel_height > "+strconv.Itoa(iHeight)+" or cancel_height is null) and height <=  "+strconv.Itoa(iHeight), ret{})
+	if err != nil {
+		return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
+	}
+	if err != nil {
+		return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
+	}
+	return ResponsePackEx(ELEPHANT_SUCCESS, rst)
+}
+
+func CrVoterStatistic(param Params) map[string]interface{} {
+	blockchain2.DefaultChainStoreEx.LockDposData()
+	defer blockchain2.DefaultChainStoreEx.UnlockDposData()
+	addr, ok := param["addr"].(string)
+	if !ok || addr == "" || len(addr) != 34 {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, " invalid address ")
+	}
+	pageNum, _ := param["pageNum"].(string)
+	var sql string
+	var from int64
+	var size int64
+	if pageNum != "" {
+		pageSize, _ := param["pageSize"].(string)
+		if pageSize != "" {
+			var err error
+			size, err = strconv.ParseInt(pageSize, 10, 64)
+			if err != nil {
+				return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, err.Error())
+			}
+		} else {
+			size = 10
+		}
+		num, err := strconv.ParseInt(pageNum, 10, 64)
+		if err != nil {
+			return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, err.Error())
+		}
+		if num <= 0 {
+			num = 1
+		}
+		from = (num - 1) * size
+	} else {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, " must use pagination ")
+	}
+	sql = "select * from chain_vote_cr_info where address = '" + addr + "' order by _id desc "
+	info, err := blockchain2.DBA.ToStruct(sql, types.Vote_cr_info{})
+	if err != nil {
+		return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
+	}
+	headersContainer := make(map[string]*types.Vote_cr_statistic_header)
+	for i := 0; i < len(info); i++ {
+		data := info[i].(*types.Vote_cr_info)
+		h, ok := headersContainer[data.Txid+strconv.Itoa(data.N)]
+		if ok {
+			h.Candidate_num += 1
+			h.Candidates = append(h.Candidates, data.Did)
+		} else {
+			h = new(types.Vote_cr_statistic_header)
+			h.Value = data.Value
+			h.Candidate_num = 1
+			h.Txid = data.Txid
+			h.Height = data.Height
+			h.Candidates = []string{data.Did}
+			h.Block_time = data.Block_time
+			h.Is_valid = data.Is_valid
+			headersContainer[data.Txid+strconv.Itoa(data.N)] = h
+		}
+	}
+	var voteStatisticSorter types.Vote_cr_statisticSorter
+	for _, v := range headersContainer {
+		voteStatisticSorter = append(voteStatisticSorter, types.Vote_cr_statistic{
+			*v,
+			[]types.Vote_cr_info{},
+		})
+	}
+	sort.Sort(voteStatisticSorter)
+	if !(from == 0 && size == 0) && int(from+1+size) <= len(voteStatisticSorter) {
+		voteStatisticSorter = voteStatisticSorter[from : from+size]
+	} else if !(from == 0 && size == 0) && int(from+1) <= len(voteStatisticSorter) && int(from+1+size) > len(voteStatisticSorter) {
+		voteStatisticSorter = voteStatisticSorter[from:]
+	}
+	var voteStatistic types.Vote_cr_statisticSorter
+	ranklisthoder := make(map[int64][]interface{})
+	//height+producer_public_key : index
+	ranklisthoderByProducer := make(map[string]int)
+	for _, _v := range voteStatisticSorter {
+		v := _v.Vote_Header
+		rst, ok := ranklisthoder[v.Height]
+		if !ok {
+			rst, err = blockchain2.DBA.ToStruct(`select m.* from (select ifnull(a.did,b.did) as did , ifnull(a.value,0) as value , b.* from 
+chain_cr_candidate_info b left join 
+(select A.did , cast(ROUND(sum(value),8) as text) as value from chain_vote_cr_info A where (A.cancel_height > `+strconv.Itoa(int(v.Height))+` or
+cancel_height is null) and height <= `+strconv.Itoa(int(v.Height))+` group by did) a on a.did = b.did
+order by value * 100000000  desc) m`, types.Vote_cr_info{})
+			if err != nil {
+				return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
+			}
+			if err != nil {
+				return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
+			}
+			for i, r := range rst {
+				vi := r.(*types.Vote_cr_info)
+				vi.Rank = int64(i + 1)
+			}
+			for m := 0; m < len(rst); m++ {
+				ranklisthoderByProducer[strconv.Itoa(int(v.Height))+rst[m].(*types.Vote_cr_info).Did] = m
+			}
+		}
+		var voteInfos []types.Vote_cr_info
+		for _, did := range v.Candidates {
+			voteInfos = append(voteInfos, *rst[ranklisthoderByProducer[strconv.Itoa(int(v.Height))+did]].(*types.Vote_cr_info))
+		}
+		voteStatistic = append(voteStatistic, types.Vote_cr_statistic{
+			v,
+			voteInfos,
+		})
+	}
+	return ResponsePackEx(ELEPHANT_SUCCESS, voteStatistic)
+}
+
+func CrCandidateRankByHeight(param Params) map[string]interface{} {
+	blockchain2.DefaultChainStoreEx.LockDposData()
+	defer blockchain2.DefaultChainStoreEx.UnlockDposData()
+	height, ok := param["height"].(string)
+	if !ok {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "invalid height")
+	}
+	h, err := strconv.Atoi(height)
+	if err != nil || h < 0 {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "invalid height")
+	}
+	state, ok := param["state"].(string)
+	if state != "all" && state != "active" && state != "pending" &&
+		state != "canceled" && state != "returned" {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "state can be one of the folowing values all,active,pending,canceled,returned")
+	}
+	var rst []interface{}
+	if state == "all" {
+		rst, err = blockchain2.DBA.ToStruct(`select m.* from (select ifnull(a.did,b.did) as did , ifnull(a.value,0) as value , b.* from
+chain_cr_candidate_info b left join 
+(select A.did , cast(ROUND(sum(value),8) as text) as value from chain_vote_cr_info A where (A.cancel_height > `+height+` or
+cancel_height is null) and height <= `+height+` group by did) a on a.did = b.did
+order by value * 100000000 desc) m `, types.Vote_cr_info{})
+	} else {
+		rst, err = blockchain2.DBA.ToStruct(`select m.* from (select ifnull(a.did,b.did) as did , ifnull(a.value,0) as value , b.* from
+chain_cr_candidate_info b left join 
+(select A.did , cast(ROUND(sum(value),8) as text) as value from chain_vote_cr_info A where (A.cancel_height > `+height+` or
+cancel_height is null) and height <= `+height+` group by did) a on a.did = b.did where b.state = '`+strings.ToUpper(state[:1])+state[1:]+`'
+order by value * 100000000  desc) m `, types.Vote_cr_info{})
+	}
+	if err != nil {
+		return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
+	}
+
+	for i, r := range rst {
+		vi := r.(*types.Vote_cr_info)
+		vi.Rank = int64(i + 1)
+	}
+
+	return ResponsePackEx(ELEPHANT_SUCCESS, rst)
+}
+
+func TotalCandidateVoteByHeight(param Params) map[string]interface{} {
+	blockchain2.DefaultChainStoreEx.LockDposData()
+	defer blockchain2.DefaultChainStoreEx.UnlockDposData()
+	height, ok := param["height"].(string)
+	if !ok {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "invalid height")
+	}
+	h, err := strconv.Atoi(height)
+	if err != nil || h < 0 {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "invalid height")
+	}
+	rst, err := blockchain2.DBA.ToFloat(`select ifnull(ROUND(sum(value),8),0) as value from chain_cr_candidate_info b left join chain_vote_cr_info a on a.did = b.did  where (cancel_height > ` + height + ` or cancel_height is null) and height <= ` + height + ``)
+	if err != nil {
+		return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
+	}
+
+	return ResponsePackEx(ELEPHANT_SUCCESS, rst)
+}
+
+func GetCandidateByTxs(param Params) map[string]interface{} {
+	blockchain2.DefaultChainStoreEx.LockDposData()
+	defer blockchain2.DefaultChainStoreEx.UnlockDposData()
+	txids, ok := param["txid"].([]interface{})
+	if !ok {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Can not find txid")
+	}
+	type ret struct {
+		Producer interface{}
+		Txid     string
+	}
+	var rst []ret
+	for _, v := range txids {
+		txid := v.(string)
+		tmp := types.Candidate_info{}
+		producer, err := blockchain2.DBA.ToStruct("select b.* from chain_cr_candidate_info b left join chain_vote_cr_info a on a.did = b.did where a.txid = '"+txid+"'", tmp)
+		if err != nil {
+			return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
+		}
+		if len(producer) > 0 && producer[0] != nil {
+			rst = append(rst, ret{
+				Producer: producer,
+				Txid:     txid,
+			})
+		}
+	}
+	return ResponsePackEx(ELEPHANT_SUCCESS, rst)
+}
