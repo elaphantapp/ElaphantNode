@@ -28,6 +28,11 @@ type MemPool struct {
 }
 
 func (m *MemPool) AppendToMemPool(tx *Transaction) error {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("Recovered from AppendToMemPool ", r)
+		}
+	}()
 	m.l.RLock()
 	if _, ok := m.is_p[tx.Hash()]; ok {
 		m.l.RUnlock()
@@ -240,7 +245,9 @@ func (m *MemPool) AppendToMemPool(tx *Transaction) error {
 		txhs = append(txhs, txh)
 	}
 	for _, p := range txhs {
+		m.l.Lock()
 		m.is_p[p.Txid] = true
+		m.l.Unlock()
 		m.i += m.i
 		err := m.store(p.Txid, p)
 		if err != nil {
