@@ -1594,6 +1594,8 @@ type crCandidateInfo struct {
 	Location uint64 `json:"location"`
 	State    string `json:"state"`
 	Votes    string `json:"votes"`
+	RegisterHeight uint32 `json:"registerheight"`
+	CancelHeight   uint32 `json:"cancelheight"`
 
 	Index uint64 `json:"index"`
 }
@@ -1759,6 +1761,8 @@ func ListCRCandidates(param Params) map[string]interface{} {
 			Location: c.Info().Location,
 			State:    c.State().String(),
 			Votes:    c.Votes().String(),
+			RegisterHeight: c.RegisterHeight(),
+			CancelHeight:   c.CancelHeight(),
 			Index:    uint64(i),
 		}
 		candidateInfoSlice = append(candidateInfoSlice, candidateInfo)
@@ -2091,12 +2095,25 @@ func getOutputPayloadInfo(op OutputPayload) OutputPayloadInfo {
 		for _, content := range object.Contents {
 			var contentInfo VoteContentInfo
 			contentInfo.VoteType = content.VoteType
-			for _, cv := range content.CandidateVotes {
-				contentInfo.CandidatesInfo = append(contentInfo.CandidatesInfo,
-					CandidateVotes{
-						Candidate: common.BytesToHexString(cv.Candidate),
-						Votes:     cv.Votes.String(),
-					})
+			switch contentInfo.VoteType {
+			case outputpayload.Delegate:
+				for _, cv := range content.CandidateVotes {
+					contentInfo.CandidatesInfo = append(contentInfo.CandidatesInfo,
+						CandidateVotes{
+							Candidate: common.BytesToHexString(cv.Candidate),
+							Votes:     cv.Votes.String(),
+						})
+				}
+			case outputpayload.CRC:
+				for _, cv := range content.CandidateVotes {
+					c, _ := common.Uint168FromBytes(cv.Candidate)
+					addr, _ := c.ToAddress()
+					contentInfo.CandidatesInfo = append(contentInfo.CandidatesInfo,
+						CandidateVotes{
+							Candidate: addr,
+							Votes:     cv.Votes.String(),
+						})
+				}
 			}
 			obj.Contents = append(obj.Contents, contentInfo)
 		}
