@@ -23,7 +23,7 @@ type Candidate_info struct {
 	Location int64  `json:",omitempty"`
 	State    string `json:",omitempty"`
 	Votes    string `json:",omitempty"`
-	Index    int64  `json:",omitempty"`
+	Index    int64
 }
 
 type Vote_cr_statistic_header struct {
