@@ -3,7 +3,6 @@ package blockchain
 import (
 	"bytes"
 	"encoding/hex"
-	common2 "github.com/elastos/Elastos.ELA.Elephant.Node/common"
 	"github.com/elastos/Elastos.ELA.Elephant.Node/core/types"
 	"github.com/elastos/Elastos.ELA/common"
 	"github.com/elastos/Elastos.ELA/common/config"
@@ -11,8 +10,6 @@ import (
 	"github.com/elastos/Elastos.ELA/dpos/state"
 	"strings"
 )
-
-var i *int = common2.NewInt(-1)
 
 func (c ChainStoreExtend) begin() {
 	c.NewBatch()

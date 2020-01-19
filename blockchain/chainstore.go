@@ -19,6 +19,7 @@ import (
 	"github.com/elastos/Elastos.ELA/events"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/robfig/cron"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -114,27 +115,52 @@ func (c *ChainStoreExtend) Close() {
 func (c *ChainStoreExtend) processVote(block *Block, voteTxHolder *map[string]TxType) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	bestHeight, _ := c.GetBestHeightExt()
 	if block.Height >= DPOS_CHECK_POINT {
 		db, err := DBA.Begin()
 		if err != nil {
 			return err
 		}
-		err = doProcessVote(block, voteTxHolder, db)
-		if err != nil {
-			db.Rollback()
-			return err
+		if block.Height >= bestHeight+1 {
+			err = doProcessVote(block, voteTxHolder, db)
+			if err != nil {
+				db.Rollback()
+				return err
+			}
 		} else {
-			err = db.Commit()
+			err = c.cleanInvalidBlock(block.Height, db)
 			if err != nil {
 				return err
 			}
+			for z := block.Height; z <= bestHeight; z++ {
+				blockHash, err := c.chain.GetBlockHash(z)
+				if err != nil {
+					db.Rollback()
+					return err
+				}
+				_block, err := c.chain.GetBlockByHash(blockHash)
+				if err != nil {
+					db.Rollback()
+					return err
+				}
+				err = doProcessVote(_block, voteTxHolder, db)
+				if err != nil {
+					db.Rollback()
+					return err
+				}
+			}
+		}
+		err = db.Commit()
+		if err != nil {
+			return err
+		}
+		if len(c.rp) > 0 {
+			c.renewProducer()
+			c.renewCrCandidates()
+			<-c.rp
 		}
 	}
-	if len(c.rp) > 0 {
-		c.renewProducer()
-		c.renewCrCandidates()
-		<-c.rp
-	}
+	c.persistBestHeight(block.Height)
 	return nil
 }
 
@@ -259,16 +285,40 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 
 func (c *ChainStoreExtend) assembleRollbackBlock(rollbackStart uint32, blk *Block, blocks *[]*Block) error {
 	for i := rollbackStart; i < blk.Height; i++ {
-		blockHash, err := c.GetBlockHash(i)
+		blockHash, err := c.chain.GetBlockHash(i)
 		if err != nil {
 			return err
 		}
-		b, err := c.GetBlock(blockHash)
+		b, err := c.chain.GetBlockByHash(blockHash)
 		if err != nil {
 			return err
 		}
 		*blocks = append(*blocks, b)
 	}
+	return nil
+}
+
+func (c *ChainStoreExtend) cleanInvalidBlock(height uint32, db *sql.Tx) error {
+	stmt, err := db.Prepare("delete from chain_vote_info where height >= ?")
+	if err != nil {
+		return err
+	}
+	stmt1, err := db.Prepare("delete from chain_vote_cr_info where height >= ?")
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(height)
+	if err != nil {
+		return err
+	}
+	_, err = stmt1.Exec(height)
+	if err != nil {
+		return err
+	}
+
+	stmt.Close()
+	stmt1.Close()
 	return nil
 }
 
@@ -561,7 +611,6 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 		c.persistTransactionHistory(txhs)
 		c.persistPbks(pubks)
 		c.persistDposReward(dposReward, block.Height)
-		c.persistBestHeight(block.Height)
 		c.persistStoredHeight(block.Height)
 	}
 	return nil
@@ -585,6 +634,8 @@ func (c *ChainStoreExtend) loop() {
 				err := c.persistTxHistory(kind)
 				if err != nil {
 					log.Errorf("Error persist transaction history %s", err.Error())
+					os.Exit(-1)
+					return
 				}
 				tcall := float64(time.Now().Sub(now)) / float64(time.Second)
 				log.Debugf("handle SaveHistory time cost: %g num transactions:%d", tcall, len(kind.Transactions))
