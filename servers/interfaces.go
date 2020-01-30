@@ -1484,7 +1484,7 @@ func GetTx(param Params) map[string]interface{} {
 				"Unknown Transaction")
 		}
 	} else {
-		bHash, err := Store.GetBlockHash(height)
+		bHash, err := Chain.GetBlockHash(height)
 		if err != nil {
 			return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, "")
 		}
