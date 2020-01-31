@@ -54,6 +54,7 @@ const (
 	ApiNodeRewardAddr               = "/api/v1/node/reward/address"
 	ApiGetSpendUtxos                = "/api/v1/spend/utxos"
 	ApiGetTx                        = "/api/v1/tx/:hash"
+	ApiGetCleanTx                   = "/api/v1/simple/tx/:hash"
 	ApiCrDidStatistic               = "/api/v1/crc/did/:did/:height"
 	ApiCrVoterStatistic             = "/api/v1/crc/address/:addr"
 	ApiCrCandidateRankByHeight      = "/api/v1/crc/rank/height/:height"
@@ -81,6 +82,7 @@ var ext_api_handle = map[string]bool{
 	ApiNodeRewardAddr:               true,
 	ApiGetSpendUtxos:                true,
 	ApiGetTx:                        true,
+	ApiGetCleanTx:                   true,
 
 	ApiCrDidStatistic:             true,
 	ApiCrVoterStatistic:           true,
@@ -182,6 +184,7 @@ func (rt *restServer) initializeMethod() {
 		ApiTotalVoteByHeight:            {name: "totalVoteByHeight", handler: servers.TotalVoteByHeight},
 		ApiNodeRewardAddr:               {name: "nodeRewardAddr", handler: servers.NodeRewardAddr},
 		ApiGetTx:                        {name: "gettx", handler: servers.GetTx},
+		ApiGetCleanTx:                   {name: "getcleantx", handler: servers.GetCleanTx},
 
 		ApiCrDidStatistic:             {name: "ApiCrDidStatistic", handler: servers.CrDidStatistic},
 		ApiCrVoterStatistic:           {name: "ApiCrVoterStatistic", handler: servers.CrVoterStatistic},
@@ -247,7 +250,8 @@ func (rt *restServer) getPath(url string) string {
 		return ApiTotalVoteByHeight
 	} else if strings.Contains(url, strings.TrimSuffix(ApiGetTx, ":hash")) {
 		return ApiGetTx
-
+	} else if strings.Contains(url, strings.TrimSuffix(ApiGetCleanTx, ":hash")) {
+		return ApiGetCleanTx
 	} else if strings.Contains(url, strings.TrimSuffix(ApiCrDidStatistic, ":did/:height")) {
 		return ApiCrDidStatistic
 	} else if strings.Contains(url, strings.TrimSuffix(ApiCrVoterStatistic, ":addr")) {
@@ -347,6 +351,8 @@ func (rt *restServer) getParams(r *http.Request, url string, req map[string]inte
 	case ApiNodeRewardAddr:
 	case ApiGetSpendUtxos:
 	case ApiGetTx:
+		req["hash"] = getParam(r, "hash")
+	case ApiGetCleanTx:
 		req["hash"] = getParam(r, "hash")
 	case ApiCrDidStatistic:
 		req["did"] = getParam(r, "did")

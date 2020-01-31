@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	blockchain2 "github.com/elastos/Elastos.ELA.Elephant.Node/blockchain"
 	common2 "github.com/elastos/Elastos.ELA.Elephant.Node/common"
@@ -1495,6 +1496,304 @@ func GetTx(param Params) map[string]interface{} {
 	}
 
 	return ResponsePackEx(ELEPHANT_SUCCESS, GetTransactionContextInfo(header, txn))
+}
+
+func GetCleanTx(param Params) map[string]interface{} {
+	str, ok := param.String("hash")
+	if !ok {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "")
+	}
+
+	bys, err := FromReversedString(str)
+	if err != nil {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "")
+	}
+
+	var hash common.Uint256
+	err = hash.Deserialize(bytes.NewReader(bys))
+	if err != nil {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "")
+	}
+	var header *Header
+	txn, height, err := Store.GetTransaction(hash)
+	if err != nil {
+		txn = TxMemPool.GetTransaction(hash)
+		if txn == nil {
+			return ResponsePackEx(ELEPHANT_SUCCESS,
+				"Unknown Transaction")
+		}
+	} else {
+		bHash, err := Chain.GetBlockHash(height)
+		if err != nil {
+			return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, "")
+		}
+		header, err = Chain.GetHeader(bHash)
+		if err != nil {
+			return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, "")
+		}
+	}
+
+	var _height, _timestamp uint32
+	if header == nil {
+		_height = 0
+		_timestamp = 0
+	} else {
+		_height = header.Height
+		_timestamp = header.Timestamp
+	}
+
+	txhs := make([]types.TransactionHistory, 0)
+	var signedAddress string
+	var node_fee common.Fixed64
+	var node_output_index uint64 = 999999
+	var memo []byte
+	var tx_type = txn.TxType
+	for _, attr := range txn.Attributes {
+		if attr.Usage == Memo {
+			memo = attr.Data
+		}
+		if attr.Usage == Description {
+			am := make(map[string]interface{})
+			err := json.Unmarshal(attr.Data, &am)
+			if err == nil {
+				pm, ok := am["Postmark"]
+				if ok {
+					dpm, ok := pm.(map[string]interface{})
+					if ok {
+						var orgMsg string
+						for i, input := range txn.Inputs {
+							hash := input.Previous.TxID
+							orgMsg += common.BytesToHexString(common.BytesReverse(hash[:])) + "-" + strconv.Itoa(int(input.Previous.Index))
+							if i != len(txn.Inputs)-1 {
+								orgMsg += ";"
+							}
+						}
+						orgMsg += "&"
+						for i, output := range txn.Outputs {
+							address, _ := output.ProgramHash.ToAddress()
+							orgMsg += address + "-" + fmt.Sprintf("%d", output.Value)
+							if i != len(txn.Outputs)-1 {
+								orgMsg += ";"
+							}
+						}
+						orgMsg += "&"
+						orgMsg += fmt.Sprintf("%d", txn.Fee)
+						log.Debugf("origin debug %s ", orgMsg)
+						pub, ok_pub := dpm["pub"].(string)
+						sig, ok_sig := dpm["signature"].(string)
+						b_msg := []byte(orgMsg)
+						b_pub, ok_b_pub := hex.DecodeString(pub)
+						b_sig, ok_b_sig := hex.DecodeString(sig)
+						if ok_pub && ok_sig && ok_b_pub == nil && ok_b_sig == nil {
+							pubKey, err := crypto.DecodePoint(b_pub)
+							if err != nil {
+								log.Infof("Error deserialise pubkey from postmark data %s", hex.EncodeToString(attr.Data))
+								continue
+							}
+							err = crypto.Verify(*pubKey, b_msg, b_sig)
+							if err != nil {
+								log.Infof("Error verify postmark data %s", hex.EncodeToString(attr.Data))
+								continue
+							}
+							signedAddress, err = common2.GetAddress(b_pub)
+							if err != nil {
+								log.Infof("Error Getting signed address from postmark %s", hex.EncodeToString(attr.Data))
+								continue
+							}
+						} else {
+							log.Infof("Invalid postmark data %s", hex.EncodeToString(attr.Data))
+							continue
+						}
+					} else {
+						log.Infof("Invalid postmark data %s", hex.EncodeToString(attr.Data))
+						continue
+					}
+				}
+			}
+		}
+	}
+
+	if tx_type == CoinBase {
+		var to []common.Uint168
+		hold := make(map[common.Uint168]uint64)
+		txhscoinbase := make([]types.TransactionHistory, 0)
+		for _, vout := range txn.Outputs {
+			if !common2.ContainsU168(vout.ProgramHash, to) {
+				to = append(to, vout.ProgramHash)
+				txh := types.TransactionHistory{}
+				txh.Address = vout.ProgramHash
+				txh.Inputs = []common.Uint168{blockchain2.MINING_ADDR}
+				txh.TxType = tx_type
+				txh.Txid = txn.Hash()
+				txh.Height = uint64(_height)
+				txh.CreateTime = uint64(_timestamp)
+				txh.Type = []byte(blockchain2.INCOME)
+				txh.Fee = 0
+				txh.Memo = memo
+				txh.NodeFee = 0
+				txh.NodeOutputIndex = uint64(node_output_index)
+				hold[vout.ProgramHash] = uint64(vout.Value)
+				txhscoinbase = append(txhscoinbase, txh)
+			} else {
+				hold[vout.ProgramHash] += uint64(vout.Value)
+			}
+		}
+		for i := 0; i < len(txhscoinbase); i++ {
+			txhscoinbase[i].Outputs = []common.Uint168{txhscoinbase[i].Address}
+			txhscoinbase[i].Value = hold[txhscoinbase[i].Address]
+		}
+		txhs = append(txhs, txhscoinbase...)
+	} else {
+		isCrossTx := false
+		if tx_type == TransferCrossChainAsset {
+			isCrossTx = true
+		}
+
+		version := txn.Version
+		if version == 0x09 {
+			vout := txn.Outputs
+			for _, v := range vout {
+				if v.Type == 0x01 && v.AssetID == *blockchain2.ELA_ASSET {
+					tx_type = types.Vote
+				}
+			}
+		}
+		spend := make(map[common.Uint168]int64)
+		var totalInput int64 = 0
+		var from []common.Uint168
+		var to []common.Uint168
+		for _, input := range txn.Inputs {
+			txid := input.Previous.TxID
+			index := input.Previous.Index
+			referTx, _, _ := Store.GetTransaction(txid)
+			address := referTx.Outputs[index].ProgramHash
+			totalInput += int64(referTx.Outputs[index].Value)
+			v, ok := spend[address]
+			if ok {
+				spend[address] = v + int64(referTx.Outputs[index].Value)
+			} else {
+				spend[address] = int64(referTx.Outputs[index].Value)
+			}
+			if !common2.ContainsU168(address, from) {
+				from = append(from, address)
+			}
+		}
+		receive := make(map[common.Uint168]int64)
+		var totalOutput int64 = 0
+		for i, output := range txn.Outputs {
+			address, _ := output.ProgramHash.ToAddress()
+			var valueCross int64
+			if isCrossTx == true && (output.ProgramHash == blockchain2.MINING_ADDR || strings.Index(address, "X") == 0 || address == "4oLvT2") {
+				switch pl := txn.Payload.(type) {
+				case *payload.TransferCrossChainAsset:
+					valueCross = int64(pl.CrossChainAmounts[0])
+				}
+			}
+			if valueCross != 0 {
+				totalOutput += valueCross
+			} else {
+				totalOutput += int64(output.Value)
+			}
+			v, ok := receive[output.ProgramHash]
+			if ok {
+				receive[output.ProgramHash] = v + int64(output.Value)
+			} else {
+				receive[output.ProgramHash] = int64(output.Value)
+			}
+			if !common2.ContainsU168(output.ProgramHash, to) {
+				to = append(to, output.ProgramHash)
+			}
+			if signedAddress != "" {
+				outputAddress, _ := output.ProgramHash.ToAddress()
+				if signedAddress == outputAddress {
+					node_fee = output.Value
+					node_output_index = uint64(i)
+				}
+			}
+		}
+		fee := totalInput - totalOutput
+		for k, r := range receive {
+			transferType := blockchain2.INCOME
+			s, ok := spend[k]
+			var value int64
+			if ok {
+				if s > r {
+					value = s - r
+					transferType = blockchain2.SPEND
+				} else {
+					value = r - s
+				}
+				delete(spend, k)
+			} else {
+				value = r
+			}
+			var realFee uint64 = uint64(fee)
+			var rto = to
+			if transferType == blockchain2.INCOME {
+				realFee = 0
+				rto = []common.Uint168{k}
+			}
+
+			if transferType == blockchain2.SPEND {
+				from = []common.Uint168{k}
+			}
+
+			txh := types.TransactionHistory{}
+			txh.Value = uint64(value)
+			txh.Address = k
+			txh.Inputs = from
+			txh.TxType = tx_type
+			txh.Txid = txn.Hash()
+			txh.Height = uint64(_height)
+			txh.CreateTime = uint64(_timestamp)
+			txh.Type = []byte(transferType)
+			txh.Fee = realFee
+			txh.NodeFee = uint64(node_fee)
+			txh.NodeOutputIndex = uint64(node_output_index)
+			if len(rto) > 10 {
+				txh.Outputs = rto[0:10]
+			} else {
+				txh.Outputs = rto
+			}
+			txh.Memo = memo
+			txh.Status = 1
+			txhs = append(txhs, txh)
+		}
+
+		for k, r := range spend {
+			txh := types.TransactionHistory{}
+			txh.Value = uint64(r)
+			txh.Address = k
+			txh.Inputs = []common.Uint168{k}
+			txh.TxType = tx_type
+			txh.Txid = txn.Hash()
+			txh.Height = uint64(_height)
+			txh.CreateTime = uint64(_timestamp)
+			txh.Type = []byte(blockchain2.SPEND)
+			txh.Fee = uint64(fee)
+			txh.NodeFee = uint64(node_fee)
+			txh.NodeOutputIndex = uint64(node_output_index)
+			if len(to) > 10 {
+				txh.Outputs = to[0:10]
+			} else {
+				txh.Outputs = to
+			}
+			txh.Memo = memo
+			txh.Status = 1
+			txhs = append(txhs, txh)
+		}
+	}
+
+	ret := make([]*types.TransactionHistoryDisplay, 0)
+	for _, txh := range txhs {
+		value := new(bytes.Buffer)
+		txh.Serialize(value)
+		dis, _ := txh.Deserialize(value)
+		dis.NodeOutputIndex = nil
+		dis.NodeFee = nil
+		ret = append(ret, dis)
+	}
+	return ResponsePackEx(ELEPHANT_SUCCESS, ret)
 }
 
 //Transaction
