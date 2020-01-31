@@ -1992,3 +1992,65 @@ total cr candidates vote of specific height
           "result":2468878.85555,
           "status":200
         }
+
+Get simplified transaction record (including pending transaction)
+------------------------------------------------
+
+.. http:get:: /api/v1/simple/tx/(string:`txid`)
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1/simple/tx/d0f826ca7e7da50dee8fd37b39c7aa5014d5630d0c178f724bdb492b18a45706 HTTP/1.1
+      Host: localhost
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+        {
+            "result":[
+                {
+                    "Address":"Ed57c3wF3J1u8vEYE9cjGUpqGPkEJC69v8",
+                    "Txid":"d0f826ca7e7da50dee8fd37b39c7aa5014d5630d0c178f724bdb492b18a45706",
+                    "Type":"income",
+                    "Value":425211,
+                    "CreateTime":1580431843,
+                    "Height":565675,
+                    "Fee":0,
+                    "Inputs":[
+                        "EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW"
+                    ],
+                    "Outputs":[
+                        "Ed57c3wF3J1u8vEYE9cjGUpqGPkEJC69v8"
+                    ],
+                    "TxType":"TransferAsset",
+                    "Memo":"type:text,msg:From ELABank,ThaiEla Super Node Reward Distribution",
+                    "Status":"confirmed"
+                },
+                {
+                    "Address":"EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW",
+                    "Txid":"d0f826ca7e7da50dee8fd37b39c7aa5014d5630d0c178f724bdb492b18a45706",
+                    "Type":"spend",
+                    "Value":425311,
+                    "CreateTime":1580431843,
+                    "Height":565675,
+                    "Fee":100,
+                    "Inputs":[
+                        "EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW"
+                    ],
+                    "Outputs":[
+                        "Ed57c3wF3J1u8vEYE9cjGUpqGPkEJC69v8",
+                        "EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW"
+                    ],
+                    "TxType":"TransferAsset",
+                    "Memo":"type:text,msg:From ELABank,ThaiEla Super Node Reward Distribution",
+                    "Status":"confirmed"
+                }
+            ],
+            "status":200
+        }
