@@ -1514,6 +1514,7 @@ func GetCleanTx(param Params) map[string]interface{} {
 	if err != nil {
 		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "")
 	}
+	var _status uint64 = 0
 	var header *Header
 	txn, height, err := Store.GetTransaction(hash)
 	if err != nil {
@@ -1522,6 +1523,7 @@ func GetCleanTx(param Params) map[string]interface{} {
 			return ResponsePackEx(ELEPHANT_SUCCESS,
 				"Unknown Transaction")
 		}
+		_status = 1
 	} else {
 		bHash, err := Chain.GetBlockHash(height)
 		if err != nil {
@@ -1756,7 +1758,7 @@ func GetCleanTx(param Params) map[string]interface{} {
 				txh.Outputs = rto
 			}
 			txh.Memo = memo
-			txh.Status = 1
+			txh.Status = _status
 			txhs = append(txhs, txh)
 		}
 
@@ -1779,7 +1781,7 @@ func GetCleanTx(param Params) map[string]interface{} {
 				txh.Outputs = to
 			}
 			txh.Memo = memo
-			txh.Status = 1
+			txh.Status = _status
 			txhs = append(txhs, txh)
 		}
 	}
