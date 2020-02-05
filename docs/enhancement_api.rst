@@ -1296,7 +1296,7 @@ If we can not get the public key of this adress.
 Calculate UTXO that is about to spend
 ------------------------------------------------
 
-.. http:get:: /api/v1/createTx
+.. http:post:: /api/v1/createTx
 
    **Example request**:
 
@@ -1370,6 +1370,80 @@ Calculate UTXO that is about to spend
             },
             "status": 200
         }
+
+Calculate UTXO that is about to vote
+------------------------------------------------
+
+.. http:post:: /api/v1/createVoteTx
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1/createVoteTx HTTP/1.1
+      Host: localhost
+
+        {
+            "inputs":[
+                "ERh7jTzBYiuEZrom9i8XvECqgiDtjSL255"
+            ],
+            "outputs":[
+                {
+                    "addr":"ERh7jTzBYiuEZrom9i8XvECqgiDtjSL255",
+                    "amt":"19500"
+                }
+            ]
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+        {
+            "result": {
+                "Transactions": [
+                    {
+                        "Fee": 100,
+                        "Outputs": [
+                            {
+                                "address": "ERh7jTzBYiuEZrom9i8XvECqgiDtjSL255",
+                                "amount": 19500
+                            },
+                            {
+                                "address": "EQNJEA8XhraX8a6SBq98ENU5QSW6nvgSHJ",
+                                "amount": 4760
+                            },
+                            {
+                                "address": "ERh7jTzBYiuEZrom9i8XvECqgiDtjSL255",
+                                "amount": 1238967853
+                            }
+                        ],
+                        "Postmark": {
+                            "pub": "03c3a4a137eb63b05e9f14070639e680df78616d70ee1ba52b0759236b4b698cdb",
+                            "signature": "f137b4d07e989077f2d36d50e5884f7aad23298abb8cfe2d575b25672858f72975919baf5c56a351f403ec21f9456c655d7229fed4eae34354a20043f610b894"
+                        },
+                        "Total_Node_Fee": 4860,
+                        "UTXOInputs": [
+                            {
+                                "address": "ERh7jTzBYiuEZrom9i8XvECqgiDtjSL255",
+                                "index": 1,
+                                "txid": "433e361b80c4f8191b73f1f94a36307581b2f3408f515801952ac284dbc44e4e"
+                            },
+                            {
+                                "address": "ERh7jTzBYiuEZrom9i8XvECqgiDtjSL255",
+                                "index": 1,
+                                "txid": "405cca6796d181df6bef75834c273b73694da3c004962ced7d697380042976a2"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "status": 200
+        }
+
 
 SendRawTx Support multi transaction
 ------------------------------------------------
@@ -2054,3 +2128,52 @@ Get simplified transaction record (including pending transaction)
             ],
             "status":200
         }
+
+Get Balance
+------------------------------------------------
+
+.. http:get:: /api/v1/balance/(string:`address`)
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1/balance/EXuF9pAnZ8pwyGjJvvDrx73kfpi4oNeqyW HTTP/1.1
+      Host: localhost
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+        {
+            "result":"219.87897023",
+            "status":200
+        }
+
+Get Current Height
+------------------------------------------------
+
+.. http:get:: /api/v1/currHeight
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1/currHeight HTTP/1.1
+      Host: localhost
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Content-Type: application/json
+
+        {
+            "result":569218,
+            "status":200
+        }
+
