@@ -618,7 +618,7 @@ Get balance of address
         }
 
 
-get balance of specific asset
+Get balance of specific asset
 ------------------------------------------------
 
 .. http:get:: /api/v1/asset/balance/(String:`addr`)/(String:`assetid`)
@@ -627,7 +627,7 @@ get balance of specific asset
 
    .. sourcecode:: http
 
-      get /api/v1/asset/balance/EbKEBwgbRGbn6AWbZBS1WjsZXWeNLnJYnb/a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0 HTTP/1.1
+      Get /api/v1/asset/balance/EbKEBwgbRGbn6AWbZBS1WjsZXWeNLnJYnb/a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0 HTTP/1.1
       Host: localhost
 
    **Example response**:
@@ -651,7 +651,7 @@ Get utxos of address
 
    .. sourcecode:: http
 
-      get /api/v1/asset/utxos/EgJda6QVAuHLxYb1x3wC7iibK92P1z2RDx HTTP/1.1
+      Get /api/v1/asset/utxos/EgJda6QVAuHLxYb1x3wC7iibK92P1z2RDx HTTP/1.1
       Host: localhost
 
    **Example response**:
@@ -714,7 +714,7 @@ send raw transaction
             "Result":"c9fdcfaac3372015e9f574e1617bf6275af747a14c2cb901c01097e38e006711"
         }
 
-get transaction pool
+Get transaction pool
 -----------------------------------------
 
 .. http:get:: /api/v1/transactionpool
@@ -723,7 +723,7 @@ get transaction pool
 
    .. sourcecode:: http
 
-      get /api/v1/transactionpool HTTP/1.1
+      Get /api/v1/transactionpool HTTP/1.1
       Host: localhost
 
    **Example response**:
@@ -2341,7 +2341,7 @@ node fee
 
    .. sourcecode:: http
 
-      get /api/v1/fee HTTP/1.1
+      Get /api/v1/fee HTTP/1.1
       Host: localhost
 
    **Example response**:
@@ -2365,7 +2365,7 @@ node reward address
 
    .. sourcecode:: http
 
-      get /api/v1/node/reward/address HTTP/1.1
+      Get /api/v1/node/reward/address HTTP/1.1
       Host: localhost
 
    **Example response**:
@@ -2444,7 +2444,7 @@ summary of all spend utxo value
             "status": 200
       }
 
-get transaction
+Get transaction
 -----------------------------------------
 return transaction if it exists in transaction pool or confirmed on a block
 
@@ -2454,7 +2454,7 @@ return transaction if it exists in transaction pool or confirmed on a block
 
    .. sourcecode:: http
 
-      get /api/v1/tx/90151759b2ce3bf87970a0b3e2aa2456ad61ee27a60a02089758d6061e7af74a HTTP/1.1
+      Get /api/v1/tx/90151759b2ce3bf87970a0b3e2aa2456ad61ee27a60a02089758d6061e7af74a HTTP/1.1
       Host: localhost
 
    **Example response**:
