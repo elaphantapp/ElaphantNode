@@ -51,6 +51,7 @@ var (
 	Arbiter     *dpos.Arbitrator
 	Arbiters    state.Arbitrators
 	Wallet      *wallet.Wallet
+	emptyHash   = common.Uint168{}
 )
 
 func ToReversedString(hash common.Uint256) string {
@@ -1889,6 +1890,7 @@ type producersInfo struct {
 //single cr candidate info
 type crCandidateInfo struct {
 	Code           string `json:"code"`
+	CID            string `json:"cid"`
 	DID            string `json:"did"`
 	NickName       string `json:"nickname"`
 	Url            string `json:"url"`
@@ -1911,6 +1913,7 @@ type crCandidatesInfo struct {
 //single cr member info
 type crMemberInfo struct {
 	Code             string         `json:"code"`
+	CID              string         `json:"cid"`
 	DID              string         `json:"did"`
 	NickName         string         `json:"nickname"`
 	Url              string         `json:"url"`
@@ -2053,9 +2056,14 @@ func ListCRCandidates(param Params) map[string]interface{} {
 	var totalVotes common.Fixed64
 	for i, c := range candidates {
 		totalVotes += c.Votes()
-		didAddress, _ := c.Info().DID.ToAddress()
+		cidAddress, _ := c.Info().CID.ToAddress()
+		var didAddress string
+		if !c.Info().DID.IsEqual(emptyHash) {
+			didAddress, _ = c.Info().DID.ToAddress()
+		}
 		candidateInfo := crCandidateInfo{
 			Code:           hex.EncodeToString(c.Info().Code),
+			CID:            cidAddress,
 			DID:            didAddress,
 			NickName:       c.Info().NickName,
 			Url:            c.Info().Url,
@@ -2093,6 +2101,7 @@ func ListCRCandidates(param Params) map[string]interface{} {
 	return ResponsePack(Success, result)
 }
 
+
 //list current crs according to (state)
 func ListCurrentCRs(param Params) map[string]interface{} {
 
@@ -2111,9 +2120,14 @@ func ListCurrentCRs(param Params) map[string]interface{} {
 	var rsCRMemberInfoSlice []crMemberInfo
 
 	for i, cr := range crMembers {
-		didAddress, _ := cr.Info.DID.ToAddress()
+		cidAddress, _ := cr.Info.CID.ToAddress()
+		var didAddress string
+		if !cr.Info.DID.IsEqual(emptyHash) {
+			didAddress, _ = cr.Info.DID.ToAddress()
+		}
 		memberInfo := crMemberInfo{
 			Code:             hex.EncodeToString(cr.Info.Code),
+			CID:              cidAddress,
 			DID:              didAddress,
 			NickName:         cr.Info.NickName,
 			Url:              cr.Info.Url,
@@ -2259,19 +2273,31 @@ func GetDepositCoin(param Params) map[string]interface{} {
 }
 
 func GetCRDepositCoin(param Params) map[string]interface{} {
-	did, ok := param.String("did")
-	if !ok {
-		return ResponsePack(InvalidParams, "need a param called did")
-	}
-	programHash, err := common.Uint168FromAddress(did)
-	if err != nil {
-		return ResponsePack(InvalidParams, "invalid did to programHash")
-	}
-
 	crState := Chain.GetCRCommittee().GetState()
-	candidate := crState.GetCandidateByDID(*programHash)
+	var candidate *crstate.Candidate
+	pubkey, ok := param.String("publickey")
+	if ok {
+		candidate = crState.GetCandidateByPublicKey(pubkey)
+		if candidate == nil {
+			return ResponsePack(InvalidParams, "can not find CR candidate")
+		}
+	}
+	id, ok := param.String("id")
+	if ok {
+		programHash, err := common.Uint168FromAddress(id)
+		if err != nil {
+			return ResponsePack(InvalidParams, "invalid id to programHash")
+		}
+
+		candidate = crState.GetCandidateByID(*programHash)
+		if candidate == nil {
+			return ResponsePack(InvalidParams, "can not find CR candidate")
+		}
+
+	}
 	if candidate == nil {
-		return ResponsePack(InvalidParams, "can not find CR candidate")
+		return ResponsePack(InvalidParams, "need a param called "+
+			"publickey or id")
 	}
 
 	type depositCoin struct {
