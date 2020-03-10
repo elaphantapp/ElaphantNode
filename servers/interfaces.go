@@ -2101,7 +2101,6 @@ func ListCRCandidates(param Params) map[string]interface{} {
 	return ResponsePack(Success, result)
 }
 
-
 //list current crs according to (state)
 func ListCurrentCRs(param Params) map[string]interface{} {
 
