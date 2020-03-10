@@ -2874,13 +2874,13 @@ Get cr candidates total vote of specific height
 ------------------------------------------------
 total cr candidates vote of specific height
 
-.. http:get:: /api/v1/dpos/vote/height/(int:`height`)
+.. http:get:: /api/v1/crc/vote/height/(int:`height`)
 
    **Example request**:
 
    .. sourcecode:: http
 
-      GET /api/v1/dpos/vote/height/241762 HTTP/1.1
+      GET /api/v1/crc/vote/height/241762 HTTP/1.1
       Host: localhost
 
    **Example response**:
