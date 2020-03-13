@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/btcsuite/btcd v0.20.1-beta // indirect
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/elastos/Elastos.ELA v0.4.1
+	github.com/elastos/Elastos.ELA v0.4.2
 	github.com/elastos/Elastos.ELA.SideChain.ID v0.0.0-20190603025656-34f49ac01d85
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/gorilla/websocket v0.0.0-20190629185528-ae1634f6a989
