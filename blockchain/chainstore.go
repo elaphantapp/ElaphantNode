@@ -169,6 +169,7 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 		tx := block.Transactions[i]
 		version := tx.Version
 		txid, err := common.ReverseHexString(tx.Hash().String())
+		vt := 0
 		if err != nil {
 			return err
 		}
@@ -210,8 +211,22 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 							}
 							var err error
 							if votetypeStr == "Delegate" {
+								if vt != 3 {
+									if vt == 2 {
+										vt = 3
+									} else if vt == 0 {
+										vt = 1
+									}
+								}
 								_, err = stmt.Exec(common2.BytesToHexString(candidate.Candidate), votetypeStr, txid, n, value, outputlock, address, block.Header.Timestamp, block.Header.Height)
 							} else {
+								if vt != 3 {
+									if vt == 1 {
+										vt = 3
+									} else if vt == 0 {
+										vt = 2
+									}
+								}
 								didbyte, err := common2.Uint168FromBytes(candidate.Candidate)
 								if err != nil {
 									return err
@@ -225,8 +240,6 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 							if err != nil {
 								return err
 							}
-
-							(*voteTxHolder)[txid] = types.Vote
 						}
 					}
 				}
@@ -234,6 +247,15 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 			stmt.Close()
 			stmt1.Close()
 		}
+
+		if vt == 1 {
+			(*voteTxHolder)[txid] = types.Vote
+		} else if vt == 2 {
+			(*voteTxHolder)[txid] = types.Crc
+		} else if vt == 3 {
+			(*voteTxHolder)[txid] = types.VoteAndCrc
+		}
+
 		// remove canceled vote
 		vin := tx.Inputs
 		prepStat, err := db.Prepare("select * from chain_vote_info where txid = ? and n = ?")
@@ -688,7 +710,8 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 				}
 			}
 		}
-		if vers == "3" {
+
+		if vers == "3" || vers == "4" {
 			if txhd.Type == "spend" {
 				txhd.Fee = txhd.Fee + uint64(*txhd.NodeFee)
 			}
@@ -703,13 +726,20 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 			txhd.NodeOutputIndex = nil
 			txhd.Status = ""
 		}
+
+		if vers != "4" {
+			if txhd.Type == "crc" || txhd.Type == "voteAndCrc" {
+				txhd.Type = "vote"
+			}
+		}
+
 		if order == "desc" {
 			txhs = append(txhs.(types.TransactionHistorySorterDesc), *txhd)
 		} else {
 			txhs = append(txhs.(types.TransactionHistorySorter), *txhd)
 		}
 	}
-	if vers == "3" {
+	if vers == "3" || vers == "4" {
 		poolTx := DefaultMemPool.GetMemPoolTx(address)
 		for _, txh := range poolTx {
 			txh.TxType = strings.ToLower(txh.TxType[0:1]) + txh.TxType[1:]

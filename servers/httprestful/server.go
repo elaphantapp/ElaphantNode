@@ -38,6 +38,7 @@ const (
 	ApiGetHistory                   = "/api/v1/history/:addr"
 	ApiGetHistory_v2                = "/api/v2/history/:addr"
 	ApiGetHistory_v3                = "/api/v3/history/:addr"
+	ApiGetHistory_v4                = "/api/v4/history/:addr"
 	ApiCreateTx                     = "/api/v1/createTx"
 	ApiGetPublicKey                 = "/api/v1/pubkey/:addr"
 	ApiGetBalance                   = "/api/v1/balance/:addr"
@@ -66,6 +67,7 @@ var ext_api_handle = map[string]bool{
 	ApiGetHistory:                   true,
 	ApiGetHistory_v2:                true,
 	ApiGetHistory_v3:                true,
+	ApiGetHistory_v4:                true,
 	ApiCreateTx:                     true,
 	ApiGetPublicKey:                 true,
 	ApiGetBalance:                   true,
@@ -173,6 +175,7 @@ func (rt *restServer) initializeMethod() {
 		ApiGetHistory:                   {name: "gethistory", handler: servers.GetHistory},
 		ApiGetHistory_v2:                {name: "gethistory_v2", handler: servers.GetHistory},
 		ApiGetHistory_v3:                {name: "gethistory_v3", handler: servers.GetHistory},
+		ApiGetHistory_v4:                {name: "gethistory_v4", handler: servers.GetHistory},
 		ApiGetPublicKey:                 {name: "getpublickey", handler: servers.GetPublicKey},
 		ApiGetBalance:                   {name: "getbalance", handler: servers.GetBalance},
 		ApiCurrHeight:                   {name: "currHeight", handler: servers.CurrHeight},
@@ -234,6 +237,8 @@ func (rt *restServer) getPath(url string) string {
 		return ApiGetHistory_v2
 	} else if strings.Contains(url, strings.TrimRight(ApiGetHistory_v3, ":addr")) {
 		return ApiGetHistory_v3
+	} else if strings.Contains(url, strings.TrimRight(ApiGetHistory_v4, ":addr")) {
+		return ApiGetHistory_v4
 	} else if strings.Contains(url, strings.TrimRight(ApiGetPublicKey, ":addr")) {
 		return ApiGetPublicKey
 	} else if strings.Contains(url, strings.TrimRight(ApiGetBalance, ":addr")) {
@@ -319,6 +324,10 @@ func (rt *restServer) getParams(r *http.Request, url string, req map[string]inte
 	case ApiGetHistory_v3:
 		req["addr"] = getParam(r, "addr")
 		req["version"] = "3"
+		getQueryParam(r, req)
+	case ApiGetHistory_v4:
+		req["addr"] = getParam(r, "addr")
+		req["version"] = "4"
 		getQueryParam(r, req)
 	case ApiGetPublicKey:
 		req["addr"] = getParam(r, "addr")

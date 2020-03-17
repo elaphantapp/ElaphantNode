@@ -10,7 +10,11 @@ import (
 	"io"
 )
 
-var Vote TxType = 0x90
+var (
+	Vote       TxType = 0x90
+	Crc        TxType = 0x91
+	VoteAndCrc TxType = 0x92
+)
 
 var TxTypeEnum = map[TxType]string{
 	CoinBase:                "CoinBase",
@@ -23,6 +27,8 @@ var TxTypeEnum = map[TxType]string{
 	WithdrawFromSideChain:   "WithdrawFromSideChain",
 	TransferCrossChainAsset: "TransferCrossChainAsset",
 	Vote:                    "Vote",
+	Crc:                     "Crc",
+	VoteAndCrc:              "VoteAndCrc",
 }
 
 type TransactionHistory struct {

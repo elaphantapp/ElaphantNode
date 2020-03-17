@@ -10,6 +10,7 @@ import (
 	"github.com/elastos/Elastos.ELA/common"
 	"github.com/elastos/Elastos.ELA/common/log"
 	. "github.com/elastos/Elastos.ELA/core/types"
+	"github.com/elastos/Elastos.ELA/core/types/outputpayload"
 	"github.com/elastos/Elastos.ELA/core/types/payload"
 	"github.com/elastos/Elastos.ELA/crypto"
 	"strconv"
@@ -114,8 +115,13 @@ func (m *MemPool) AppendToMemPool(tx *Transaction) error {
 	if tx_type == TransferCrossChainAsset {
 		isCrossTx = true
 	}
-	if m.isVoteTx(tx) {
+	judge := m.isVoteTx(tx)
+	if judge == 1 {
 		tx_type = types.Vote
+	} else if judge == 2 {
+		tx_type = types.Crc
+	} else if judge == 3 {
+		tx_type = types.VoteAndCrc
 	}
 	spend := make(map[common.Uint168]int64)
 	var totalInput int64 = 0
@@ -257,17 +263,41 @@ func (m *MemPool) AppendToMemPool(tx *Transaction) error {
 	return nil
 }
 
-func (m *MemPool) isVoteTx(tx *Transaction) bool {
+func (m *MemPool) isVoteTx(tx *Transaction) (vt int) {
 	version := tx.Version
 	if version == 0x09 {
 		vout := tx.Outputs
 		for _, v := range vout {
 			if v.Type == 0x01 && v.AssetID == *ELA_ASSET {
-				return true
+				payload, ok := v.Payload.(*outputpayload.VoteOutput)
+				if !ok || payload == nil {
+					continue
+				}
+				contents := payload.Contents
+				for _, cv := range contents {
+					votetype := cv.VoteType
+					if votetype == 0x00 {
+						if vt != 3 {
+							if vt == 2 {
+								vt = 3
+							} else if vt == 0 {
+								vt = 1
+							}
+						}
+					} else if votetype == 0x01 {
+						if vt != 3 {
+							if vt == 1 {
+								vt = 3
+							} else if vt == 0 {
+								vt = 2
+							}
+						}
+					}
+				}
 			}
 		}
 	}
-	return false
+	return
 }
 
 func (m *MemPool) store(txid common.Uint256, history types.TransactionHistory) error {
