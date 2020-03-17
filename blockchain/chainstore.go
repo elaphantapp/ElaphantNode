@@ -500,8 +500,8 @@ func (c *ChainStoreExtend) persistTxHistory(blk *Block) error {
 				if tx_type == TransferCrossChainAsset {
 					isCrossTx = true
 				}
-				if voteTxHolder[txid] == types.Vote {
-					tx_type = types.Vote
+				if voteTxHolder[txid] == types.Vote || voteTxHolder[txid] == types.Crc || voteTxHolder[txid] == types.VoteAndCrc {
+					tx_type = voteTxHolder[txid]
 				}
 				spend := make(map[common2.Uint168]int64)
 				var totalInput int64 = 0
@@ -728,8 +728,8 @@ func (c *ChainStoreExtend) GetTxHistory(addr string, order string, vers string) 
 		}
 
 		if vers != "4" {
-			if txhd.Type == "crc" || txhd.Type == "voteAndCrc" {
-				txhd.Type = "vote"
+			if txhd.TxType == "crc" || txhd.TxType == "voteAndCrc" {
+				txhd.TxType = "vote"
 			}
 		}
 
