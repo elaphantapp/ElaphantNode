@@ -27,13 +27,18 @@ type Candidate_info struct {
 }
 
 type Vote_cr_statistic_header struct {
-	Value         string   `json:",omitempty"`
-	Candidate_num int      `json:",omitempty"`
-	Txid          string   `json:",omitempty"`
-	Height        int64    `json:",omitempty"`
-	Candidates    []string `json:",omitempty"`
-	Block_time    int64    `json:",omitempty"`
-	Is_valid      string   `json:",omitempty"`
+	Value         string       `json:",omitempty"`
+	Candidate_num int          `json:",omitempty"`
+	Txid          string       `json:",omitempty"`
+	Height        int64        `json:",omitempty"`
+	Candidates    []Candidates `json:",omitempty"`
+	Block_time    int64        `json:",omitempty"`
+	Is_valid      string       `json:",omitempty"`
+}
+
+type Candidates struct {
+	Did   string `json:",omitempty"`
+	Value string `json:",omitempty"`
 }
 
 type Vote_cr_statistic struct {

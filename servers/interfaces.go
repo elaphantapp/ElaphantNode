@@ -3336,6 +3336,15 @@ func CrDidStatistic(param Params) map[string]interface{} {
 	return ResponsePackEx(ELEPHANT_SUCCESS, rst)
 }
 
+func str2Float64(sf string) float64 {
+	r, err := strconv.ParseFloat(sf, 64)
+	if err != nil {
+		log.Errorf("Error parsing str to float64 %s", sf)
+		return 0
+	}
+	return r
+}
+
 func CrVoterStatistic(param Params) map[string]interface{} {
 	blockchain2.DefaultChainStoreEx.LockDposData()
 	defer blockchain2.DefaultChainStoreEx.UnlockDposData()
@@ -3380,14 +3389,15 @@ func CrVoterStatistic(param Params) map[string]interface{} {
 		h, ok := headersContainer[data.Txid+strconv.Itoa(data.N)]
 		if ok {
 			h.Candidate_num += 1
-			h.Candidates = append(h.Candidates, data.Did)
+			h.Value = strconv.FormatFloat(str2Float64(h.Value)+str2Float64(data.Value), 'g', 9, 64)
+			h.Candidates = append(h.Candidates, types.Candidates{data.Did, data.Value})
 		} else {
 			h = new(types.Vote_cr_statistic_header)
 			h.Value = data.Value
 			h.Candidate_num = 1
 			h.Txid = data.Txid
 			h.Height = data.Height
-			h.Candidates = []string{data.Did}
+			h.Candidates = []types.Candidates{{data.Did, data.Value}}
 			h.Block_time = data.Block_time
 			h.Is_valid = data.Is_valid
 			headersContainer[data.Txid+strconv.Itoa(data.N)] = h
@@ -3422,9 +3432,6 @@ order by value * 100000000  desc) m`, types.Vote_cr_info{})
 			if err != nil {
 				return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
 			}
-			if err != nil {
-				return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
-			}
 			for i, r := range rst {
 				vi := r.(*types.Vote_cr_info)
 				vi.Rank = int64(i + 1)
@@ -3434,8 +3441,8 @@ order by value * 100000000  desc) m`, types.Vote_cr_info{})
 			}
 		}
 		var voteInfos []types.Vote_cr_info
-		for _, did := range v.Candidates {
-			voteInfos = append(voteInfos, *rst[ranklisthoderByProducer[strconv.Itoa(int(v.Height))+did]].(*types.Vote_cr_info))
+		for _, cand := range v.Candidates {
+			voteInfos = append(voteInfos, *rst[ranklisthoderByProducer[strconv.Itoa(int(v.Height))+cand.Did]].(*types.Vote_cr_info))
 		}
 		voteStatistic = append(voteStatistic, types.Vote_cr_statistic{
 			v,
