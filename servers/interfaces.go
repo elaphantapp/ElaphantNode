@@ -32,6 +32,7 @@ import (
 	"github.com/elastos/Elastos.ELA/pow"
 	"github.com/elastos/Elastos.ELA/wallet"
 	"github.com/tidwall/gjson"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -3345,6 +3346,8 @@ func str2Float64(sf string) float64 {
 	return r
 }
 
+const satoshi = 100000000.0
+
 func CrVoterStatistic(param Params) map[string]interface{} {
 	blockchain2.DefaultChainStoreEx.LockDposData()
 	defer blockchain2.DefaultChainStoreEx.UnlockDposData()
@@ -3389,7 +3392,7 @@ func CrVoterStatistic(param Params) map[string]interface{} {
 		h, ok := headersContainer[data.Txid+strconv.Itoa(data.N)]
 		if ok {
 			h.Candidate_num += 1
-			h.Value = strconv.FormatFloat(str2Float64(h.Value)+str2Float64(data.Value), 'g', 9, 64)
+			h.Value = strconv.FormatFloat(math.Round((str2Float64(h.Value)*satoshi+str2Float64(data.Value)*satoshi))/float64(satoshi), 'f', 8, 64)
 			h.Candidates = append(h.Candidates, types.Candidates{data.Did, data.Value})
 		} else {
 			h = new(types.Vote_cr_statistic_header)
