@@ -2627,90 +2627,198 @@ cr candidates voter's statistics
       Content-Type: application/json
 
         {
-          "result": [
-            {
-              "Vote_Header": {
-                "Value": "0.00001234",
-                "Candidate_num": 2,
-                "Txid": "4dda465d537b67048b3243e1ebb35e237204aae9a5ed27c7232850ebd6ea4e47",
-                "Height": 349794,
-                "Candidates": [
-                  "iXuss6uqEdaSB6aho9SpnLouu3EEaiBfsE",
-                  "ih1kcYd76SvHPsUrBM72xkAk5Htkhz7xv8"
-                ],
-                "Block_time": 1577415445,
-                "Is_valid": "NO"
+          "result":[
+              {
+                  "Vote_Header":{
+                      "Value":"3149.00000000",
+                      "Candidate_num":5,
+                      "Txid":"7ed36f3021dff4e376e289dbfcbeeac7465f3ef34d1b043d54d323b6349b2766",
+                      "Height":606176,
+                      "Candidates":[
+                          {
+                              "Did":"iiw7RvgaYJKqpnrEuLGmDrs5dQmBBwy1iG",
+                              "Value":"625"
+                          },
+                          {
+                              "Did":"icaJrj8zbbECzPTF5wGScktq5ce56mRPee",
+                              "Value":"700"
+                          },
+                          {
+                              "Did":"icS954DGsXXuYJCUbRKiC8JAcoxkaeQVZg",
+                              "Value":"700"
+                          },
+                          {
+                              "Did":"ibdkX3PQHwKAu6vRaeDVyo8VU9mXW2Wm8R",
+                              "Value":"625"
+                          },
+                          {
+                              "Did":"iVSBp5ocfrLnAwDTS7C9LUKvyo4SY7f67B",
+                              "Value":"499"
+                          }
+                      ],
+                      "Block_time":1585319751,
+                      "Is_valid":"YES"
+                  },
+                  "Vote_Body":[
+                      {
+                          "Did":"iiw7RvgaYJKqpnrEuLGmDrs5dQmBBwy1iG",
+                          "Value":"16316.92336823",
+                          "Rank":8,
+                          "Code":"2103b07d9c916e797cf6b118cf7db7e272f78b6f771c80ea28d7b55bc5820fb84a69ac",
+                          "Nickname":"Bitwork Council Committee",
+                          "Url":"www.cyberrepublic.org/cr-regions",
+                          "Location":852,
+                          "State":"Active",
+                          "Votes":"33318.26967387",
+                          "Index":12
+                      },
+                      {
+                          "Did":"icaJrj8zbbECzPTF5wGScktq5ce56mRPee",
+                          "Value":"11337.32973863",
+                          "Rank":12,
+                          "Code":"2103ab0e09ca450a9fc619b12750eb76db7393321c6f935f817d0cdd81543065aa89ac",
+                          "Nickname":"Alex Shipp",
+                          "Url":"twitter.com/AlexShippELA",
+                          "Location":1001,
+                          "State":"Active",
+                          "Votes":"28338.67604427",
+                          "Index":13
+                      },
+                      {
+                          "Did":"icS954DGsXXuYJCUbRKiC8JAcoxkaeQVZg",
+                          "Value":"94285.12308166",
+                          "Rank":1,
+                          "Code":"2102073cdb080e3d3c545039195040f82f8fe026ded3506730dbce02c8e0ddd13b7bac",
+                          "Nickname":"The Strawberry Council",
+                          "Url":"strawberrysupernodes.org/council",
+                          "Location":1001,
+                          "State":"Active",
+                          "Votes":"99138.08391183",
+                          "Index":2
+                      },
+                      {
+                          "Did":"ibdkX3PQHwKAu6vRaeDVyo8VU9mXW2Wm8R",
+                          "Value":"31899.26830899",
+                          "Rank":5,
+                          "Code":"21027f574bfd3a4497ed9dcc41ee5b0503c1aa8083cd765c98ccf6be9158bb2ea5dcac",
+                          "Nickname":"Michael S",
+                          "Url":"https://twitter.com/Elastos_Houston?s=09",
+                          "Location":1001,
+                          "State":"Active",
+                          "Votes":"31904.15598133",
+                          "Index":5
+                      },
+                      {
+                          "Did":"iVSBp5ocfrLnAwDTS7C9LUKvyo4SY7f67B",
+                          "Value":"13853.32924318",
+                          "Rank":9,
+                          "Code":"2103d2066d7aaf04cf209885b77985f9fef5217595dfb5da3e73672d9209138e3aa9ac",
+                          "Nickname":"Orchard Trinity",
+                          "Url":"https://www.elastosorchard.eu/orchardcouncil",
+                          "Location":44,
+                          "State":"Active",
+                          "Votes":"28700.06162124",
+                          "Index":11
+                      }
+                  ]
               },
-              "Vote_Body": [
-                {
-                  "Did": "iXuss6uqEdaSB6aho9SpnLouu3EEaiBfsE",
-                  "Value": "7334.45077953",
-                  "Rank": 2,
-                  "Code": "2103df458c3c68624e5fac2c4fdae8fec47f612d69a8217575ddc4ad49135286c70fac",
-                  "Nickname": "r_adr_us00",
-                  "Url": "https://54.223.244.60/bpinfo.json",
-                  "Location": 1441,
-                  "State": "Active",
-                  "Votes": "7336.57647854",
-                  "Index": 70
-                },
-                {
-                  "Did": "ih1kcYd76SvHPsUrBM72xkAk5Htkhz7xv8",
-                  "Value": "7613.51397119",
-                  "Rank": 1,
-                  "Code": "2103d69fe4f0348db20916848ba638355c2752e791ef0ab16722b5ba12ee6c93c01bac",
-                  "Nickname": "r_adr_us51",
-                  "Url": "www.r_adr_us51.com",
-                  "Location": 86,
-                  "State": "Active",
-                  "Votes": "7615.61967020",
-                  "Index": 139
-                }
-              ]
-            },
-            {
-              "Vote_Header": {
-                "Value": "0.00000617",
-                "Candidate_num": 2,
-                "Txid": "e5cac0f4aab0bb2ef1410a3c66fb47fe7a6970a0332814dd44d14bd42f7573c5",
-                "Height": 349791,
-                "Candidates": [
-                  "iXuss6uqEdaSB6aho9SpnLouu3EEaiBfsE",
-                  "ih1kcYd76SvHPsUrBM72xkAk5Htkhz7xv8"
-                ],
-                "Block_time": 1577414965,
-                "Is_valid": "NO"
-              },
-              "Vote_Body": [
-                {
-                  "Did": "iXuss6uqEdaSB6aho9SpnLouu3EEaiBfsE",
-                  "Value": "7334.45077336",
-                  "Rank": 2,
-                  "Code": "2103df458c3c68624e5fac2c4fdae8fec47f612d69a8217575ddc4ad49135286c70fac",
-                  "Nickname": "r_adr_us00",
-                  "Url": "https://54.223.244.60/bpinfo.json",
-                  "Location": 1441,
-                  "State": "Active",
-                  "Votes": "7336.57647854",
-                  "Index": 70
-                },
-                {
-                  "Did": "ih1kcYd76SvHPsUrBM72xkAk5Htkhz7xv8",
-                  "Value": "7613.51396502",
-                  "Rank": 1,
-                  "Code": "2103d69fe4f0348db20916848ba638355c2752e791ef0ab16722b5ba12ee6c93c01bac",
-                  "Nickname": "r_adr_us51",
-                  "Url": "www.r_adr_us51.com",
-                  "Location": 86,
-                  "State": "Active",
-                  "Votes": "7615.61967020",
-                  "Index": 139
-                }
-              ]
-            }
+              {
+                  "Vote_Header":{
+                      "Value":"3149.00000000",
+                      "Candidate_num":5,
+                      "Txid":"3538cb55a6b0bfbd816d6073c6d4294a35c6c8a50d2e824f4bdbf2ee4a00450e",
+                      "Height":599876,
+                      "Candidates":[
+                          {
+                              "Did":"iiw7RvgaYJKqpnrEuLGmDrs5dQmBBwy1iG",
+                              "Value":"625"
+                          },
+                          {
+                              "Did":"icaJrj8zbbECzPTF5wGScktq5ce56mRPee",
+                              "Value":"700"
+                          },
+                          {
+                              "Did":"icS954DGsXXuYJCUbRKiC8JAcoxkaeQVZg",
+                              "Value":"700"
+                          },
+                          {
+                              "Did":"ibdkX3PQHwKAu6vRaeDVyo8VU9mXW2Wm8R",
+                              "Value":"625"
+                          },
+                          {
+                              "Did":"iVSBp5ocfrLnAwDTS7C9LUKvyo4SY7f67B",
+                              "Value":"499"
+                          }
+                      ],
+                      "Block_time":1584561600,
+                      "Is_valid":"NO"
+                  },
+                  "Vote_Body":[
+                      {
+                          "Did":"iiw7RvgaYJKqpnrEuLGmDrs5dQmBBwy1iG",
+                          "Value":"2644.13275111",
+                          "Rank":14,
+                          "Code":"2103b07d9c916e797cf6b118cf7db7e272f78b6f771c80ea28d7b55bc5820fb84a69ac",
+                          "Nickname":"Bitwork Council Committee",
+                          "Url":"www.cyberrepublic.org/cr-regions",
+                          "Location":852,
+                          "State":"Active",
+                          "Votes":"33318.26967387",
+                          "Index":12
+                      },
+                      {
+                          "Did":"icaJrj8zbbECzPTF5wGScktq5ce56mRPee",
+                          "Value":"9242.77551718",
+                          "Rank":12,
+                          "Code":"2103ab0e09ca450a9fc619b12750eb76db7393321c6f935f817d0cdd81543065aa89ac",
+                          "Nickname":"Alex Shipp",
+                          "Url":"twitter.com/AlexShippELA",
+                          "Location":1001,
+                          "State":"Active",
+                          "Votes":"28338.67604427",
+                          "Index":13
+                      },
+                      {
+                          "Did":"icS954DGsXXuYJCUbRKiC8JAcoxkaeQVZg",
+                          "Value":"92529.41144443",
+                          "Rank":1,
+                          "Code":"2102073cdb080e3d3c545039195040f82f8fe026ded3506730dbce02c8e0ddd13b7bac",
+                          "Nickname":"The Strawberry Council",
+                          "Url":"strawberrysupernodes.org/council",
+                          "Location":1001,
+                          "State":"Active",
+                          "Votes":"99138.08391183",
+                          "Index":2
+                      },
+                      {
+                          "Did":"ibdkX3PQHwKAu6vRaeDVyo8VU9mXW2Wm8R",
+                          "Value":"30345.20862991",
+                          "Rank":6,
+                          "Code":"21027f574bfd3a4497ed9dcc41ee5b0503c1aa8083cd765c98ccf6be9158bb2ea5dcac",
+                          "Nickname":"Michael S",
+                          "Url":"https://twitter.com/Elastos_Houston?s=09",
+                          "Location":1001,
+                          "State":"Active",
+                          "Votes":"31904.15598133",
+                          "Index":5
+                      },
+                      {
+                          "Did":"iVSBp5ocfrLnAwDTS7C9LUKvyo4SY7f67B",
+                          "Value":"13913.93044388",
+                          "Rank":8,
+                          "Code":"2103d2066d7aaf04cf209885b77985f9fef5217595dfb5da3e73672d9209138e3aa9ac",
+                          "Nickname":"Orchard Trinity",
+                          "Url":"https://www.elastosorchard.eu/orchardcouncil",
+                          "Location":44,
+                          "State":"Active",
+                          "Votes":"28700.06162124",
+                          "Index":11
+                      }
+                  ]
+              }
           ],
-          "status": 200
-        }
+          "status":200
+      }
 
 
 Get voted cr candidates of specific transactions
