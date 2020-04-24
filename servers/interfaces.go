@@ -3408,11 +3408,13 @@ func CrVoterStatistic(param Params) map[string]interface{} {
 	}
 	var voteStatisticSorter types.Vote_cr_statisticSorter
 	for _, v := range headersContainer {
+		v.Total_num = len(headersContainer)
 		voteStatisticSorter = append(voteStatisticSorter, types.Vote_cr_statistic{
 			*v,
 			[]types.Vote_cr_info{},
 		})
 	}
+
 	sort.Sort(voteStatisticSorter)
 	if !(from == 0 && size == 0) && int(from+1+size) <= len(voteStatisticSorter) {
 		voteStatisticSorter = voteStatisticSorter[from : from+size]
@@ -3451,6 +3453,7 @@ order by value * 100000000  desc) m`, types.Vote_cr_info{})
 			v,
 			voteInfos,
 		})
+
 	}
 	return ResponsePackEx(ELEPHANT_SUCCESS, voteStatistic)
 }

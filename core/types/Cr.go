@@ -29,6 +29,7 @@ type Candidate_info struct {
 type Vote_cr_statistic_header struct {
 	Value         string       `json:",omitempty"`
 	Candidate_num int          `json:",omitempty"`
+	Total_num     int          `json:",omitempty"`
 	Txid          string       `json:",omitempty"`
 	Height        int64        `json:",omitempty"`
 	Candidates    []Candidates `json:",omitempty"`
