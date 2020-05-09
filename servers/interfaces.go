@@ -3014,6 +3014,9 @@ func VoterStatistic(param Params) map[string]interface{} {
 			if err != nil {
 				return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, err.Error())
 			}
+			if size > 3 {
+				return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "page size can not bigger then 3")
+			}
 		} else {
 			size = 10
 		}
