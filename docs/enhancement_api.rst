@@ -2904,6 +2904,54 @@ Get voted cr candidates of specific transactions
       }
 
 
+Get all cr voters address list of specific height
+------------------------------------------------
+
+      .. http:get:: /api/v1/crc/voter/list/(int:`height`)
+
+       **Example request**:
+
+       .. sourcecode:: http
+
+          GET /api/v1/crc/voter/list/100000000 HTTP/1.1
+          Host: localhost
+
+       **Example response**:
+
+       .. sourcecode:: http
+
+          HTTP/1.1 200 OK
+          Content-Type: application/json
+
+            {
+                "result":[
+                    {
+                        "Address":"EHAujPsi2u48wD9kZ1ji2g5DDNihLCN9ta"
+                    },
+                    {
+                        "Address":"EHCjAMd77sK5tQduLoAh3Jcw2YGbGKBCCU"
+                    },
+                    {
+                        "Address":"EHFgKWpMd1uvsyGR4diXHVGrnAq2LqT4j7"
+                    },
+                    {
+                        "Address":"EgPJr1q2GZNqcTYNqJDbkV1uQ4QiP8oAXo"
+                    },
+                    {
+                        "Address":"EgQX4bgYNH493HUbAi8ZvUd9h2weewoZah"
+                    },
+                    {
+                        "Address":"EgR1DNB6Ab6q2kWWDvBLKjdzo6yu5y9jj3"
+                    },
+                    {
+                        "Address":"EgUC1qbXPPnPawZq4NFw3oFXDbY8xBisdH"
+                    }
+                ],
+                "status":200
+            }
+
+
+
 Get cr candidates rank list
 ------------------------------------------------
 rank list of cr candidates , state can be active , pending , canceled , returned , all
