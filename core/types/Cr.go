@@ -54,3 +54,7 @@ func (a Vote_cr_statisticSorter) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a Vote_cr_statisticSorter) Less(i, j int) bool {
 	return a[i].Vote_Header.Height > a[j].Vote_Header.Height
 }
+
+type Cr_voter struct {
+	Address string
+}

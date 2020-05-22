@@ -61,6 +61,7 @@ const (
 	ApiCrCandidateRankByHeight      = "/api/v1/crc/rank/height/:height"
 	ApiTotalCandidateVoteByHeight   = "/api/v1/crc/vote/height/:height"
 	ApiGetCandidateByTxs            = "/api/v1/crc/transaction/producer"
+	ApiCrVoterListByHeight          = "/api/v1/crc/voter/list/:height"
 )
 
 var ext_api_handle = map[string]bool{
@@ -91,6 +92,7 @@ var ext_api_handle = map[string]bool{
 	ApiCrCandidateRankByHeight:    true,
 	ApiTotalCandidateVoteByHeight: true,
 	ApiGetCandidateByTxs:          true,
+	ApiCrVoterListByHeight:        true,
 }
 
 type Action struct {
@@ -193,6 +195,7 @@ func (rt *restServer) initializeMethod() {
 		ApiCrVoterStatistic:           {name: "ApiCrVoterStatistic", handler: servers.CrVoterStatistic},
 		ApiCrCandidateRankByHeight:    {name: "ApiCrCandidateRankByHeight", handler: servers.CrCandidateRankByHeight},
 		ApiTotalCandidateVoteByHeight: {name: "ApiTotalCandidateVoteByHeight", handler: servers.TotalCandidateVoteByHeight},
+		ApiCrVoterListByHeight:        {name: "ApiCrVoterListByHeight", handler: servers.ApiCrVoterListByHeight},
 	}
 	postMethodMap := map[string]Action{
 		ApiSendRawTransaction: {name: "sendrawtransaction", handler: servers.SendRawTransaction},
@@ -265,6 +268,8 @@ func (rt *restServer) getPath(url string) string {
 		return ApiCrCandidateRankByHeight
 	} else if strings.Contains(url, strings.TrimSuffix(ApiTotalCandidateVoteByHeight, ":height")) {
 		return ApiTotalCandidateVoteByHeight
+	} else if strings.Contains(url, strings.TrimSuffix(ApiCrVoterListByHeight, ":height")) {
+		return ApiCrVoterListByHeight
 	}
 	return url
 }
@@ -374,6 +379,9 @@ func (rt *restServer) getParams(r *http.Request, url string, req map[string]inte
 		req["height"] = getParam(r, "height")
 		getQueryParam(r, req)
 	case ApiTotalCandidateVoteByHeight:
+		req["height"] = getParam(r, "height")
+		getQueryParam(r, req)
+	case ApiCrVoterListByHeight:
 		req["height"] = getParam(r, "height")
 		getQueryParam(r, req)
 	}

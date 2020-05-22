@@ -3550,3 +3550,24 @@ func GetCandidateByTxs(param Params) map[string]interface{} {
 	}
 	return ResponsePackEx(ELEPHANT_SUCCESS, rst)
 }
+
+
+func ApiCrVoterListByHeight(param Params) map[string]interface{} {
+	blockchain2.DefaultChainStoreEx.LockDposData()
+	defer blockchain2.DefaultChainStoreEx.UnlockDposData()
+	height, ok := param["height"].(string)
+	if !ok {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "invalid height")
+	}
+	h, err := strconv.Atoi(height)
+	if err != nil || h < 0 {
+		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "invalid height")
+	}
+	stct := types.Cr_voter{}
+	rst, err := blockchain2.DBA.ToStruct(`select address from chain_vote_cr_info where (cancel_height > ` + height + ` or cancel_height is null) and height <= ` + height + ` group by address `, stct)
+	if err != nil {
+		return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
+	}
+
+	return ResponsePackEx(ELEPHANT_SUCCESS, rst)
+}
