@@ -17,6 +17,7 @@ import (
 	"github.com/elastos/Elastos.ELA/core/types/payload"
 	"github.com/elastos/Elastos.ELA/crypto"
 	"github.com/elastos/Elastos.ELA/events"
+	"github.com/elastos/Elastos.ELA/utils"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/robfig/cron"
 	"os"
@@ -58,6 +59,9 @@ func (c *ChainStoreExtend) AddTask(task interface{}) {
 }
 
 func NewChainStoreEx(chain *BlockChain, chainstore IChainStore, filePath string) (*ChainStoreExtend, error) {
+	if !utils.FileExisted(filePath) {
+		os.MkdirAll(filePath, 0700)
+	}
 	st, err := NewLevelDB(filePath)
 	if err != nil {
 		return nil, err

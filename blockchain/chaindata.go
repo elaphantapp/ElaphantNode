@@ -265,7 +265,7 @@ func (c *ChainStoreExtend) renewCrCandidates() {
 		if err != nil {
 			return
 		}
-		cands := c.chain.GetCRCommittee().GetState().GetAllCandidates()
+		cands := c.chain.GetCRCommittee().GetAllCandidates()
 		for i, can := range cands {
 			did, _ := can.Info().CID.ToAddress()
 			_, err = stmt.Exec(hex.EncodeToString(can.Info().Code), did, can.Info().NickName, can.Info().Url, can.Info().Location, can.State().String(), can.Votes().String(), i)

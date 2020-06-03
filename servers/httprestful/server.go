@@ -12,9 +12,9 @@ import (
 	"sync"
 
 	"github.com/elastos/Elastos.ELA.Elephant.Node/servers"
+	. "github.com/elastos/Elastos.ELA.Elephant.Node/servers/errors"
 	"github.com/elastos/Elastos.ELA/common/config"
 	"github.com/elastos/Elastos.ELA/common/log"
-	. "github.com/elastos/Elastos.ELA/errors"
 )
 
 const (
@@ -53,7 +53,6 @@ const (
 	ApiTotalVoteByHeight            = "/api/v1/dpos/vote/height/:height"
 	ApiGetProducerByTxs             = "/api/v1/dpos/transaction/producer"
 	ApiNodeRewardAddr               = "/api/v1/node/reward/address"
-	ApiGetSpendUtxos                = "/api/v1/spend/utxos"
 	ApiGetTx                        = "/api/v1/tx/:hash"
 	ApiGetCleanTx                   = "/api/v1/simple/tx/:hash"
 	ApiCrDidStatistic               = "/api/v1/crc/did/:did/:height"
@@ -83,7 +82,6 @@ var ext_api_handle = map[string]bool{
 	ApiTotalVoteByHeight:            true,
 	ApiGetProducerByTxs:             true,
 	ApiNodeRewardAddr:               true,
-	ApiGetSpendUtxos:                true,
 	ApiGetTx:                        true,
 	ApiGetCleanTx:                   true,
 
@@ -205,7 +203,6 @@ func (rt *restServer) initializeMethod() {
 		ApiSendRawTx:         {name: "sendRawTx", handler: servers.SendRawTx},
 		ApiCreateVoteTx:      {name: "createVoteTx", handler: servers.CreateVoteTx},
 		ApiGetProducerByTxs:  {name: "getProducerByTxs", handler: servers.GetProducerByTxs},
-		ApiGetSpendUtxos:     {name: "getSpendUtxos", handler: servers.GetSpendUtxos},
 		ApiGetCandidateByTxs: {name: "ApiGetCandidateByTxs", handler: servers.GetCandidateByTxs},
 	}
 	rt.postMap = postMethodMap
@@ -363,7 +360,6 @@ func (rt *restServer) getParams(r *http.Request, url string, req map[string]inte
 		getQueryParam(r, req)
 	case ApiGetProducerByTxs:
 	case ApiNodeRewardAddr:
-	case ApiGetSpendUtxos:
 	case ApiGetTx:
 		req["hash"] = getParam(r, "hash")
 	case ApiGetCleanTx:

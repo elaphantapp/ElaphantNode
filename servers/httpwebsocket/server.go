@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	. "github.com/elastos/Elastos.ELA.Elephant.Node/servers/errors"
 	"net"
 	"net/http"
 	"strconv"
@@ -20,7 +21,6 @@ import (
 	"github.com/elastos/Elastos.ELA/common/config"
 	"github.com/elastos/Elastos.ELA/common/log"
 	"github.com/elastos/Elastos.ELA/core/types"
-	"github.com/elastos/Elastos.ELA/errors"
 	"github.com/elastos/Elastos.ELA/events"
 
 	"github.com/gorilla/websocket"
@@ -116,11 +116,11 @@ func (s *Server) initMethods() {
 }
 
 func (s *Server) heartBeat(cmd servers.Params) map[string]interface{} {
-	return servers.ResponsePack(errors.Success, "123")
+	return servers.ResponsePack(Success, "123")
 }
 
 func (s *Server) getSessionCount(cmd servers.Params) map[string]interface{} {
-	return servers.ResponsePack(errors.Success, s.sessions.Count())
+	return servers.ResponsePack(Success, s.sessions.Count())
 }
 
 func (s *Server) Stop() {
@@ -140,7 +140,7 @@ func (s *Server) sessionHandler(done chan bool) {
 					return
 				}
 
-				resp := servers.ResponsePack(errors.SessionExpired, "")
+				resp := servers.ResponsePack(SessionExpired, "")
 				s.response(v, resp)
 				s.sessions.Delete(v)
 			})
@@ -215,25 +215,25 @@ func (s *Server) handle(ss *session, bysMsg []byte, r *http.Request) bool {
 	var req = make(map[string]interface{})
 
 	if err := json.Unmarshal(bysMsg, &req); err != nil {
-		resp := servers.ResponsePack(errors.IllegalDataFormat, "")
+		resp := servers.ResponsePack(IllegalDataFormat, "")
 		s.response(ss, resp)
 		log.Error("websocket OnDataHandle:", err)
 		return false
 	}
 	action, ok := req["action"].(string)
 	if !ok {
-		resp := servers.ResponsePack(errors.InvalidMethod, "")
+		resp := servers.ResponsePack(InvalidMethod, "")
 		s.response(ss, resp)
 		return false
 	}
 	handler, ok := s.handlers[action]
 	if !ok {
-		resp := servers.ResponsePack(errors.InvalidMethod, "")
+		resp := servers.ResponsePack(InvalidMethod, "")
 		s.response(ss, resp)
 		return false
 	}
 	if !s.IsValidMsg(action, req) {
-		resp := servers.ResponsePack(errors.InvalidParams, "")
+		resp := servers.ResponsePack(InvalidParams, "")
 		s.response(ss, resp)
 		return true
 	}
@@ -247,7 +247,7 @@ func (s *Server) handle(ss *session, bysMsg []byte, r *http.Request) bool {
 }
 
 func (s *Server) response(ss *session, resp map[string]interface{}) {
-	resp["Desc"] = errors.ErrMap[resp["Error"].(errors.ErrCode)]
+	resp["Desc"] = ErrMap[resp["Error"].(ServerErrCode)]
 	data, err := json.Marshal(resp)
 	if err != nil {
 		log.Error("Websocket response:", err)
@@ -307,7 +307,7 @@ func (s *Server) PushResult(action string, v interface{}) {
 		log.Error("httpwebsocket/server.go in pushresult function: unknown action")
 	}
 
-	resp := servers.ResponsePack(errors.Success, result)
+	resp := servers.ResponsePack(Success, result)
 	resp["Action"] = action
 
 	data, err := json.Marshal(resp)

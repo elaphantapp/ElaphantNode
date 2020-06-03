@@ -1,8 +1,10 @@
 package types
 
-import "github.com/elastos/Elastos.ELA/blockchain"
+import (
+	"github.com/elastos/Elastos.ELA/core/types"
+)
 
-type Utxos []*blockchain.UTXO
+type Utxos []*types.UTXO
 
 func (a Utxos) Len() int           { return len(a) }
 func (a Utxos) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }

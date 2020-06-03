@@ -206,7 +206,7 @@ type UTXOInfo struct {
 	TxType        byte   `json:"txtype"`
 	TxID          string `json:"txid"`
 	AssetID       string `json:"assetid"`
-	VOut          uint32 `json:"vout"`
+	VOut          uint16 `json:"vout"`
 	Address       string `json:"address"`
 	Amount        string `json:"amount"`
 	OutputLock    uint32 `json:"outputlock"`
