@@ -893,15 +893,17 @@ func GetBalanceByAddr(param Params) map[string]interface{} {
 		return ResponsePack(InvalidParams, "")
 	}
 
-	unspent, err := Wallet.ListUnspent(address, ChainParams.EnableUtxoDB)
+	programHash, err := common.Uint168FromAddress(address)
+	if err != nil {
+		return ResponsePack(InvalidParams, "invalid address, "+err.Error())
+	}
+	utxos, err := Store.GetFFLDB().GetUTXO(programHash)
 	if err != nil {
 		return ResponsePack(InvalidParams, "list unspent failed, "+err.Error())
 	}
 	var balance common.Fixed64 = 0
-	for _, u := range unspent {
-		for _, v := range u {
-			balance = balance + v.Value
-		}
+	for _, u := range utxos {
+		balance = balance + u.Value
 	}
 	return ResponsePack(Success, balance.String())
 }
@@ -912,50 +914,19 @@ func GetBalance(param Params) map[string]interface{} {
 		return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "")
 	}
 
-	unspent, err := Wallet.ListUnspent(str, ChainParams.EnableUtxoDB)
+	programHash, err := common.Uint168FromAddress(str)
 	if err != nil {
-		return ResponsePack(InvalidParams, "list unspent failed, "+err.Error())
+		return ResponsePackEx(InvalidParams, "invalid address, "+err.Error())
+	}
+	utxos, err := Store.GetFFLDB().GetUTXO(programHash)
+	if err != nil {
+		return ResponsePackEx(InvalidParams, "get utxo error "+err.Error())
 	}
 	var balance common.Fixed64 = 0
-	for _, u := range unspent {
-		for _, v := range u {
-			balance = balance + v.Value
-		}
+	for _, u := range utxos {
+		balance = balance + u.Value
 	}
 	return ResponsePackEx(ELEPHANT_SUCCESS, balance.String())
-}
-
-func GetBalanceByAsset(param Params) map[string]interface{} {
-	address, ok := param.String("addr")
-	if !ok {
-		return ResponsePack(InvalidParams, "")
-	}
-	assetIDStr, ok := param.String("assetid")
-	if !ok {
-		return ResponsePack(InvalidParams, "")
-	}
-	assetIDBytes, err := FromReversedString(assetIDStr)
-	if err != nil {
-		return ResponsePack(InvalidParams, "")
-	}
-	assetID, err := common.Uint256FromBytes(assetIDBytes)
-	if err != nil {
-		return ResponsePack(InvalidParams, "")
-	}
-
-	unspent, err := Wallet.ListUnspent(address, ChainParams.EnableUtxoDB)
-	if err != nil {
-		return ResponsePack(InvalidParams, "list unspent failed, "+err.Error())
-	}
-	var balance common.Fixed64 = 0
-	for k, u := range unspent {
-		for _, v := range u {
-			if assetID.IsEqual(k) {
-				balance = balance + v.Value
-			}
-		}
-	}
-	return ResponsePack(Success, balance.String())
 }
 
 func GetReceivedByAddress(param Params) map[string]interface{} {
@@ -963,17 +934,17 @@ func GetReceivedByAddress(param Params) map[string]interface{} {
 	if !ok {
 		return ResponsePack(InvalidParams, "need a parameter named address")
 	}
-
-	unspent, err := Wallet.ListUnspent(address, ChainParams.EnableUtxoDB)
+	programHash, err := common.Uint168FromAddress(address)
+	if err != nil {
+		return ResponsePack(InvalidParams, "invalid address, "+err.Error())
+	}
+	utxos, err := Store.GetFFLDB().GetUTXO(programHash)
 	if err != nil {
 		return ResponsePack(InvalidParams, "list unspent failed, "+err.Error())
 	}
-
 	var balance common.Fixed64 = 0
-	for _, u := range unspent {
-		for _, v := range u {
-			balance = balance + v.Value
-		}
+	for _, u := range utxos {
+		balance = balance + u.Value
 	}
 
 	return ResponsePack(Success, balance.String())
@@ -1102,6 +1073,10 @@ func GetAmountByInputs(param Params) map[string]interface{} {
 }
 
 func ListUnspent(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.WalletPermitted); rtn != nil {
+		return rtn
+	}
+
 	bestHeight := Chain.GetHeight()
 
 	var result []UTXOInfo
@@ -1119,35 +1094,38 @@ func ListUnspent(param Params) map[string]interface{} {
 		}
 	}
 	for _, address := range addresses {
-		unspent, err := Wallet.ListUnspent(address, ChainParams.EnableUtxoDB)
+		programHash, err := common.Uint168FromAddress(address)
+		if err != nil {
+			return ResponsePack(InvalidParams, "invalid address, "+err.Error())
+		}
+		utxos, err := Store.GetFFLDB().GetUTXO(programHash)
 		if err != nil {
 			return ResponsePack(InvalidParams, "list unspent failed, "+err.Error())
 		}
-
-		for _, unspent := range unspent[config.ELAAssetID] {
-			tx, height, err := Store.GetTransaction(unspent.TxID)
+		for _, utxo := range utxos {
+			tx, height, err := Store.GetTransaction(utxo.TxID)
 			if err != nil {
 				return ResponsePack(InternalError,
-					"unknown transaction "+unspent.TxID.String()+" from persisted utxo")
+					"unknown transaction "+utxo.TxID.String()+" from persisted utxo")
 			}
 			if utxoType == "vote" && (tx.Version < TxVersion09 ||
-				tx.Version >= TxVersion09 && tx.Outputs[unspent.Index].Type != OTVote) {
+				tx.Version >= TxVersion09 && tx.Outputs[utxo.Index].Type != OTVote) {
 				continue
 			}
-			if utxoType == "normal" && tx.Version >= TxVersion09 && tx.Outputs[unspent.Index].Type == OTVote {
+			if utxoType == "normal" && tx.Version >= TxVersion09 && tx.Outputs[utxo.Index].Type == OTVote {
 				continue
 			}
-			if unspent.Value == 0 {
+			if utxo.Value == 0 {
 				continue
 			}
 			result = append(result, UTXOInfo{
 				TxType:        byte(tx.TxType),
-				TxID:          ToReversedString(unspent.TxID),
+				TxID:          ToReversedString(utxo.TxID),
 				AssetID:       ToReversedString(config.ELAAssetID),
-				VOut:          unspent.Index,
-				Amount:        unspent.Value.String(),
+				VOut:          utxo.Index,
+				Amount:        utxo.Value.String(),
 				Address:       address,
-				OutputLock:    tx.Outputs[unspent.Index].OutputLock,
+				OutputLock:    tx.Outputs[utxo.Index].OutputLock,
 				Confirmations: bestHeight - height + 1,
 			})
 		}
@@ -2189,22 +2167,21 @@ func VoteStatus(param Params) map[string]interface{} {
 	if err != nil {
 		return ResponsePack(InvalidParams, "Invalid address: "+address)
 	}
-
-	unspent, err := Wallet.ListUnspent(address, ChainParams.EnableUtxoDB)
+	utxos, err := Store.GetFFLDB().GetUTXO(programHash)
 	if err != nil {
 		return ResponsePack(InvalidParams, "list unspent failed, "+err.Error())
 	}
 	var total common.Fixed64
 	var voting common.Fixed64
-	for _, unspent := range unspent[config.ELAAssetID] {
-		tx, _, err := Store.GetTransaction(unspent.TxID)
+	for _, utxo := range utxos {
+		tx, _, err := Store.GetTransaction(utxo.TxID)
 		if err != nil {
-			return ResponsePack(InternalError, "unknown transaction "+unspent.TxID.String()+" from persisted utxo")
+			return ResponsePack(InternalError, "unknown transaction "+utxo.TxID.String()+" from persisted utxo")
 		}
-		if tx.Outputs[unspent.Index].Type == OTVote {
-			voting += unspent.Value
+		if tx.Outputs[utxo.Index].Type == OTVote {
+			voting += utxo.Value
 		}
-		total += unspent.Value
+		total += utxo.Value
 	}
 
 	pending := false
@@ -2253,20 +2230,13 @@ func GetDepositCoin(param Params) map[string]interface{} {
 	if err != nil {
 		return ResponsePack(InvalidParams, "invalid publickey to programHash")
 	}
-	address, err := programHash.ToAddress()
-	if err != nil {
-		return ResponsePack(InvalidParams, "invalid programHash")
-	}
-
-	unspent, err := Wallet.ListUnspent(address, ChainParams.EnableUtxoDB)
+	utxos, err := Store.GetFFLDB().GetUTXO(programHash)
 	if err != nil {
 		return ResponsePack(InvalidParams, "list unspent failed, "+err.Error())
 	}
 	var balance common.Fixed64 = 0
-	for _, u := range unspent {
-		for _, v := range u {
-			balance = balance + v.Value
-		}
+	for _, utxo := range utxos {
+		balance = balance + utxo.Value
 	}
 	var deducted common.Fixed64 = 0
 	//todo get deducted coin
@@ -2569,20 +2539,13 @@ func CreateTx(param Params) map[string]interface{} {
 		if !ok {
 			return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Not valid input value")
 		}
-		//programhash, err := common.Uint168FromAddress(input)
-		//if err != nil {
-		//	return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Invalid address")
-		//}
-		//assetIDBytes, _ := FromReversedString("a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0")
-		//assetID, err := common.Uint256FromBytes(assetIDBytes)
-		//if err != nil {
-		//	return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "")
-		//}
-		unspent, err := Wallet.ListUnspent(input, ChainParams.EnableUtxoDB)
-		//utxos, err := blockchain2.DefaultChainStoreEx.GetUnspentFromProgramHash(*programhash, *assetID)
-		utxos := unspent[*account.SystemAssetID]
+		programHash, err := common.Uint168FromAddress(input)
 		if err != nil {
-			return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Internal error")
+			return ResponsePack(InvalidParams, "invalid address, "+err.Error())
+		}
+		utxos, err := Store.GetFFLDB().GetUTXO(programHash)
+		if err != nil {
+			return ResponsePack(InvalidParams, "list unspent failed, "+err.Error())
 		}
 		utxoList = append(utxoList, utxos)
 	}
@@ -2708,7 +2671,7 @@ func CreateTx(param Params) map[string]interface{} {
 			txListMap["Total_Node_Fee"] = config.Parameters.PowConfiguration.MinTxFee
 			var orgMsg string
 			for i, input := range utxoInputsArray {
-				orgMsg += input["txid"].(string) + "-" + strconv.Itoa(int(input["index"].(uint32)))
+				orgMsg += input["txid"].(string) + "-" + strconv.Itoa(int(input["index"].(uint16)))
 				if i != len(utxoInputsArray)-1 {
 					orgMsg += ";"
 				}
@@ -2764,8 +2727,11 @@ func CreateVoteTx(param Params) map[string]interface{} {
 		if !ok {
 			return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Not valid input value")
 		}
-		unspent, err := Wallet.ListUnspent(input, ChainParams.EnableUtxoDB)
-		utxos := unspent[*account.SystemAssetID]
+		programHash, err := common.Uint168FromAddress(input)
+		if err != nil {
+			return ResponsePack(InvalidParams, "invalid address, "+err.Error())
+		}
+		utxos, err := Store.GetFFLDB().GetUTXO(programHash)
 		if err != nil {
 			return ResponsePackEx(ELEPHANT_ERR_BAD_REQUEST, "Internal error")
 		}
@@ -2932,7 +2898,7 @@ func CreateVoteTx(param Params) map[string]interface{} {
 			txListMap["Total_Node_Fee"] = config.Parameters.PowConfiguration.MinTxFee
 			var orgMsg string
 			for i, input := range utxoInputsArray {
-				orgMsg += input["txid"].(string) + "-" + strconv.Itoa(int(input["index"].(uint32)))
+				orgMsg += input["txid"].(string) + "-" + strconv.Itoa(int(input["index"].(uint16)))
 				if i != len(utxoInputsArray)-1 {
 					orgMsg += ";"
 				}

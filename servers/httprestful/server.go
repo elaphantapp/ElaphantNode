@@ -28,7 +28,6 @@ const (
 	ApiGetTransaction      = "/api/v1/transaction/:hash"
 	ApiGetAsset            = "/api/v1/asset/:hash"
 	ApiGetBalanceByAddr    = "/api/v1/asset/balances/:addr"
-	ApiGetBalanceByAsset   = "/api/v1/asset/balance/:addr/:assetid"
 	ApiGetUTXOByAsset      = "/api/v1/asset/utxo/:addr/:assetid"
 	ApiGetUTXOByAddr       = "/api/v1/asset/utxos/:addr"
 	ApiSendRawTransaction  = "/api/v1/transaction"
@@ -169,7 +168,6 @@ func (rt *restServer) initializeMethod() {
 		ApiGetUTXOByAddr:       {name: "getutxobyaddr", handler: servers.GetUnspends},
 		ApiGetUTXOByAsset:      {name: "getutxobyasset", handler: servers.GetUnspendOutput},
 		ApiGetBalanceByAddr:    {name: "getbalancebyaddr", handler: servers.GetBalanceByAddr},
-		ApiGetBalanceByAsset:   {name: "getbalancebyasset", handler: servers.GetBalanceByAsset},
 
 		// extended
 		ApiGetHistory:                   {name: "gethistory", handler: servers.GetHistory},
@@ -223,8 +221,6 @@ func (rt *restServer) getPath(url string) string {
 		return ApiGetTransaction
 	} else if strings.Contains(url, strings.TrimRight(ApiGetBalanceByAddr, ":addr")) {
 		return ApiGetBalanceByAddr
-	} else if strings.Contains(url, strings.TrimRight(ApiGetBalanceByAsset, ":addr/:assetid")) {
-		return ApiGetBalanceByAsset
 	} else if strings.Contains(url, strings.TrimRight(ApiGetUTXOByAddr, ":addr")) {
 		return ApiGetUTXOByAddr
 	} else if strings.Contains(url, strings.TrimRight(ApiGetUTXOByAsset, ":addr/:assetid")) {
@@ -298,10 +294,6 @@ func (rt *restServer) getParams(r *http.Request, url string, req map[string]inte
 
 	case ApiGetAsset:
 		req["hash"] = getParam(r, "hash")
-
-	case ApiGetBalanceByAsset:
-		req["addr"] = getParam(r, "addr")
-		req["assetid"] = getParam(r, "assetid")
 
 	case ApiGetBalanceByAddr:
 		req["addr"] = getParam(r, "addr")
