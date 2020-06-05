@@ -20,7 +20,7 @@ import (
 	. "github.com/elastos/Elastos.ELA.Elephant.Node/servers"
 	"github.com/elastos/Elastos.ELA/common/config"
 	"github.com/elastos/Elastos.ELA/common/log"
-	elaErr "github.com/elastos/Elastos.ELA/errors"
+	elaErr "github.com/elastos/Elastos.ELA/servers/errors"
 )
 
 //an instance of the multiplexer
@@ -83,6 +83,9 @@ func StartRPCServer() {
 	//cr interfaces
 	mainMux["listcrcandidates"] = ListCRCandidates
 	mainMux["listcurrentcrs"] = ListCurrentCRs
+	mainMux["listcrproposalbasestate"] = ListCRProposalBaseState
+	mainMux["getcrproposalstate"] = GetCRProposalState
+	mainMux["getsecretarygeneral"] = GetSecretaryGeneral
 	// vote interfaces
 	mainMux["listproducers"] = ListProducers
 	mainMux["producerstatus"] = ProducerStatus
@@ -189,7 +192,7 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 
 	response := method(params)
 	var data []byte
-	if response["Error"] != elaErr.ErrCode(0) {
+	if response["Error"] != elaErr.ServerErrCode(0) {
 		data, _ = json.Marshal(map[string]interface{}{
 			"jsonrpc": "2.0",
 			"result":  nil,
@@ -270,7 +273,7 @@ func checkAuth(r *http.Request) bool {
 	return false
 }
 
-func RPCError(w http.ResponseWriter, httpStatus int, code elaErr.ErrCode, message string) {
+func RPCError(w http.ResponseWriter, httpStatus int, code elaErr.ServerErrCode, message string) {
 	data, _ := json.Marshal(map[string]interface{}{
 		"jsonrpc": "2.0",
 		"result":  nil,

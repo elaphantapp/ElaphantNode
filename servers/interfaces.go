@@ -230,6 +230,10 @@ func GetNodeState(param Params) map[string]interface{} {
 }
 
 func SetLogLevel(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.ConfigurationPermitted); rtn != nil {
+		return rtn
+	}
+
 	level, ok := param.Int("level")
 	if !ok || level < 0 {
 		return ResponsePack(InvalidParams, "level must be an integer in 0-6")
@@ -240,6 +244,10 @@ func SetLogLevel(param Params) map[string]interface{} {
 }
 
 func CreateAuxBlock(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.MiningPermitted); rtn != nil {
+		return rtn
+	}
+
 	payToAddr, ok := param.String("paytoaddress")
 	if !ok {
 		return ResponsePack(InvalidParams, "parameter paytoaddress not found")
@@ -271,6 +279,10 @@ func CreateAuxBlock(param Params) map[string]interface{} {
 }
 
 func SubmitAuxBlock(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.MiningPermitted); rtn != nil {
+		return rtn
+	}
+
 	blockHashHex, ok := param.String("blockhash")
 	if !ok {
 		return ResponsePack(InvalidParams, "parameter blockhash not found")
@@ -303,6 +315,10 @@ func SubmitAuxBlock(param Params) map[string]interface{} {
 }
 
 func SubmitSidechainIllegalData(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.TransactionPermitted); rtn != nil {
+		return rtn
+	}
+
 	if Arbiter == nil {
 		return ResponsePack(InternalError, "arbiter disabled")
 	}
@@ -427,8 +443,6 @@ func GetInfo(param Params) map[string]interface{} {
 }
 
 func AuxHelp(param Params) map[string]interface{} {
-
-	//TODO  and description for this rpc-interface
 	return ResponsePack(Success, "createauxblock==submitauxblock")
 }
 
@@ -458,6 +472,10 @@ func GetMiningInfo(param Params) map[string]interface{} {
 }
 
 func ToggleMining(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.ConfigurationPermitted); rtn != nil {
+		return rtn
+	}
+
 	mining, ok := param.Bool("mining")
 	if !ok {
 		return ResponsePack(InvalidParams, "")
@@ -476,6 +494,10 @@ func ToggleMining(param Params) map[string]interface{} {
 }
 
 func DiscreteMining(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.MiningPermitted); rtn != nil {
+		return rtn
+	}
+
 	if Pow == nil {
 		return ResponsePack(PowServiceNotStarted, "")
 	}
@@ -591,17 +613,17 @@ func getBlock(hash common.Uint256, verbose uint32) (interface{}, ServerErrCode) 
 }
 
 func getConfirm(hash common.Uint256, verbose uint32) (interface{}, ServerErrCode) {
-	confirm, err := Store.GetConfirm(hash)
-	if err != nil {
+	block, _ := Store.GetFFLDB().GetBlock(hash)
+	if block == nil || !block.HaveConfirm {
 		return "", UnknownBlock
 	}
 	if verbose == 0 {
 		w := new(bytes.Buffer)
-		confirm.Serialize(w)
+		block.Confirm.Serialize(w)
 		return common.BytesToHexString(w.Bytes()), Success
 	}
 
-	return GetConfirmInfo(confirm), Success
+	return GetConfirmInfo(block.Confirm), Success
 }
 
 func GetBlockByHash(param Params) map[string]interface{} {
@@ -674,6 +696,10 @@ func GetConfirmByHash(param Params) map[string]interface{} {
 }
 
 func SendRawTransaction(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.TransactionPermitted); rtn != nil {
+		return rtn
+	}
+
 	str, ok := param.String("data")
 	if !ok {
 		return ResponsePack(InvalidParams, "need a string parameter named data")
@@ -689,7 +715,7 @@ func SendRawTransaction(param Params) map[string]interface{} {
 	}
 
 	if err := VerifyAndSendTx(&txn); err != nil {
-		return ResponsePack(err.(ServerErrCode), err.Error())
+		return ResponsePack(InvalidTransaction, err.Error())
 	}
 
 	return ResponsePack(Success, ToReversedString(txn.Hash()))
@@ -1043,6 +1069,10 @@ func GetUTXOsByAmount(param Params) map[string]interface{} {
 }
 
 func GetAmountByInputs(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.WalletPermitted); rtn != nil {
+		return rtn
+	}
+
 	inputStr, ok := param.String("inputs")
 	if !ok {
 		return ResponsePack(InvalidParams, "need a parameter named inputs!")
@@ -1134,6 +1164,10 @@ func ListUnspent(param Params) map[string]interface{} {
 }
 
 func CreateRawTransaction(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.WalletPermitted); rtn != nil {
+		return rtn
+	}
+
 	inputsParam, ok := param.String("inputs")
 	if !ok {
 		return ResponsePack(InvalidParams, "need a parameter named inputs")
@@ -1223,6 +1257,9 @@ func CreateRawTransaction(param Params) map[string]interface{} {
 }
 
 func SignRawTransactionWithKey(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.WalletPermitted); rtn != nil {
+		return rtn
+	}
 	dataParam, ok := param.String("data")
 	if !ok {
 		return ResponsePack(InvalidParams, "need a parameter named data")
@@ -1343,36 +1380,6 @@ func SignRawTransactionWithKey(param Params) map[string]interface{} {
 	}
 
 	return ResponsePack(Success, common.BytesToHexString(result.Bytes()))
-}
-
-func ImportAddress(param Params) map[string]interface{} {
-	address, ok := param.String("address")
-	if !ok {
-		return ResponsePack(InvalidParams, "need a parameter named address")
-	}
-
-	if err := Wallet.ImportAddress(address, ChainParams.EnableUtxoDB); err != nil {
-		return ResponsePack(InternalError, "import address failed: "+err.Error())
-	}
-
-	return ResponsePack(Success, 0)
-}
-
-func ImportPubkey(param Params) map[string]interface{} {
-	pubKey, ok := param.String("pubkey")
-	if !ok {
-		return ResponsePack(InvalidParams, "need a parameter named pubkey")
-	}
-	pubKeyBytes, err := common.HexStringToBytes(pubKey)
-	if err != nil {
-		return ResponsePack(InvalidParams, "invalid pubkey")
-	}
-
-	if err := Wallet.ImportPubkey(pubKeyBytes, ChainParams.EnableUtxoDB); err != nil {
-		return ResponsePack(InternalError, "import public key failed: "+err.Error())
-	}
-
-	return ResponsePack(Success, 0)
 }
 
 func GetUnspends(param Params) map[string]interface{} {
@@ -1921,6 +1928,51 @@ type RpcCrMembersInfo struct {
 	TotalCounts       uint64            `json:"totalcounts"`
 }
 
+type RpcProposalBaseState struct {
+	Status             string            `json:"status"`
+	ProposalHash       string            `json:"proposalhash"`
+	TxHash             string            `json:"txhash"`
+	CRVotes            map[string]string `json:"crvotes"`
+	VotersRejectAmount string            `json:"votersrejectamount"`
+	RegisterHeight     uint32            `json:"registerHeight"`
+	TerminatedHeight   uint32            `json:"terminatedheight"`
+	TrackingCount      uint8             `json:"trackingcount"`
+	ProposalOwner      string            `json:"proposalowner"`
+	Index              uint64            `json:"index"`
+}
+
+type RpcCRProposalBaseStateInfo struct {
+	ProposalBaseStates []RpcProposalBaseState `json:"proposalbasestates"`
+	TotalCounts        uint64                 `json:"totalcounts"`
+}
+
+type RpcCRCProposal struct {
+	ProposalType       string       `json:"proposaltype"`
+	OwnerPublicKey     string       `json:"ownerpublickey"`
+	CRCouncilMemberDID string       `json:"crcouncilmemberdid"`
+	DraftHash          string       `json:"drafthash"`
+	Recipient          string       `json:"recipient"`
+	Budgets            []BudgetInfo `json:"budgets"`
+}
+
+type RpcProposalState struct {
+	Status             string            `json:"status"`
+	Proposal           RpcCRCProposal    `json:"proposal"`
+	ProposalHash       string            `json:"proposalhash"`
+	TxHash             string            `json:"txhash"`
+	CRVotes            map[string]string `json:"crvotes"`
+	VotersRejectAmount string            `json:"votersrejectamount"`
+	RegisterHeight     uint32            `json:"registerheight"`
+	TerminatedHeight   uint32            `json:"terminatedheight"`
+	TrackingCount      uint8             `json:"trackingcount"`
+	ProposalOwner      string            `json:"proposalowner"`
+	AvailableAmount    string            `json:"availableamount"`
+}
+
+type RpcCRProposalStateInfo struct {
+	ProposalState RpcProposalState `json:"proposalstate"`
+}
+
 func ListProducers(param Params) map[string]interface{} {
 	start, _ := param.Int("start")
 	limit, ok := param.Int("limit")
@@ -2002,6 +2054,13 @@ func ListProducers(param Params) map[string]interface{} {
 		TotalCounts:       uint64(count),
 	}
 
+	return ResponsePack(Success, result)
+}
+
+func GetSecretaryGeneral(param Params) map[string]interface{} {
+	result := &RpcSecretaryGeneral{
+		SecretaryGeneral: ChainParams.SecretaryGeneral,
+	}
 	return ResponsePack(Success, result)
 }
 
@@ -2135,6 +2194,181 @@ func ListCurrentCRs(param Params) map[string]interface{} {
 		TotalCounts:       uint64(count),
 	}
 
+	return ResponsePack(Success, result)
+}
+
+func ListCRProposalBaseState(param Params) map[string]interface{} {
+	start, _ := param.Int("start")
+	limit, ok := param.Int("limit")
+	if !ok {
+		limit = -1
+	}
+	s, ok := param.String("state")
+	if ok {
+		s = strings.ToLower(s)
+	}
+	var proposalMap crstate.ProposalsMap
+	crCommittee := Chain.GetCRCommittee()
+	switch s {
+	case "all":
+		proposalMap = crCommittee.GetAllProposals()
+	case "registered":
+		proposalMap = crCommittee.GetProposals(crstate.Registered)
+	case "cragreed":
+		proposalMap = crCommittee.GetProposals(crstate.CRAgreed)
+	case "voteragreed":
+		proposalMap = crCommittee.GetProposals(crstate.VoterAgreed)
+	case "finished":
+		proposalMap = crCommittee.GetProposals(crstate.Finished)
+	case "crcanceled":
+		proposalMap = crCommittee.GetProposals(crstate.CRCanceled)
+	case "votercanceled":
+		proposalMap = crCommittee.GetProposals(crstate.VoterCanceled)
+	case "aborted":
+		proposalMap = crCommittee.GetProposals(crstate.Aborted)
+	case "terminated":
+		proposalMap = crCommittee.GetProposals(crstate.Terminated)
+	default:
+		return ResponsePack(InvalidParams, "invalidate state")
+	}
+
+	var crVotes map[string]string
+	var RpcProposalBaseStates []RpcProposalBaseState
+
+	var index uint64
+	for _, proposal := range proposalMap {
+		crVotes = make(map[string]string)
+		for k, v := range proposal.CRVotes {
+			did, _ := k.ToAddress()
+			crVotes[did] = v.Name()
+		}
+		RpcProposalBaseState := RpcProposalBaseState{
+			Status:             proposal.Status.String(),
+			ProposalHash:       ToReversedString(proposal.Proposal.Hash()),
+			TxHash:             ToReversedString(proposal.TxHash),
+			CRVotes:            crVotes,
+			VotersRejectAmount: proposal.VotersRejectAmount.String(),
+			RegisterHeight:     proposal.RegisterHeight,
+			TrackingCount:      proposal.TrackingCount,
+			TerminatedHeight:   proposal.TerminatedHeight,
+			ProposalOwner:      hex.EncodeToString(proposal.ProposalOwner),
+			Index:              index,
+		}
+		RpcProposalBaseStates = append(RpcProposalBaseStates, RpcProposalBaseState)
+		index++
+	}
+	sort.Slice(RpcProposalBaseStates, func(i, j int) bool {
+		return RpcProposalBaseStates[i].
+			ProposalHash < RpcProposalBaseStates[j].ProposalHash
+	})
+
+	for k := range RpcProposalBaseStates {
+		RpcProposalBaseStates[k].Index = uint64(k)
+	}
+
+	count := int64(len(RpcProposalBaseStates))
+	if limit < 0 {
+		limit = count
+	}
+	var rSRpcProposalBaseStates []RpcProposalBaseState
+	if start < count {
+		end := start
+		if start+limit <= count {
+			end = start + limit
+		} else {
+			end = count
+		}
+		rSRpcProposalBaseStates = append(rSRpcProposalBaseStates, RpcProposalBaseStates[start:end]...)
+	}
+
+	result := &RpcCRProposalBaseStateInfo{
+		ProposalBaseStates: rSRpcProposalBaseStates,
+		TotalCounts:        uint64(count),
+	}
+
+	return ResponsePack(Success, result)
+}
+
+func GetCRProposalState(param Params) map[string]interface{} {
+	var proposalState *crstate.ProposalState
+	crCommittee := Chain.GetCRCommittee()
+	ProposalHashHexStr, ok := param.String("proposalhash")
+	if ok {
+		proposalHashBytes, err := FromReversedString(ProposalHashHexStr)
+		if err != nil {
+			return ResponsePack(InvalidParams, "invalidate proposalhash")
+		}
+		ProposalHash, err := common.Uint256FromBytes(proposalHashBytes)
+		if err != nil {
+			return ResponsePack(InvalidParams, "invalidate proposalhash")
+		}
+		proposalState = crCommittee.GetProposal(*ProposalHash)
+		if proposalState == nil {
+			return ResponsePack(InvalidParams, "proposalhash not exist")
+		}
+
+	} else {
+		DraftHashStr, ok := param.String("drafthash")
+		if !ok {
+			return ResponsePack(InvalidParams, "params at least one of proposalhash and DraftHash")
+		}
+		DraftHashStrBytes, err := FromReversedString(DraftHashStr)
+		if err != nil {
+			return ResponsePack(InvalidParams, "invalidate drafthash")
+		}
+		DraftHash, err := common.Uint256FromBytes(DraftHashStrBytes)
+		if err != nil {
+			return ResponsePack(InvalidParams, "invalidate drafthash")
+		}
+		proposalState = crCommittee.GetProposalByDraftHash(*DraftHash)
+		if proposalState == nil {
+			return ResponsePack(InvalidParams, "DraftHash not exist")
+		}
+	}
+
+	var rpcProposal RpcCRCProposal
+	proposalHash := proposalState.Proposal.Hash()
+
+	did, _ := proposalState.Proposal.CRCouncilMemberDID.ToAddress()
+	rpcProposal.CRCouncilMemberDID = did
+	rpcProposal.DraftHash = ToReversedString(proposalState.Proposal.DraftHash)
+	rpcProposal.ProposalType = proposalState.Proposal.ProposalType.Name()
+	rpcProposal.OwnerPublicKey = common.BytesToHexString(proposalState.Proposal.OwnerPublicKey)
+	rpcProposal.Budgets = make([]BudgetInfo, 0)
+	for _, b := range proposalState.Proposal.Budgets {
+		budgetStatus := proposalState.BudgetsStatus[b.Stage]
+		rpcProposal.Budgets = append(rpcProposal.Budgets, BudgetInfo{
+			Type:   b.Type.Name(),
+			Stage:  b.Stage,
+			Amount: b.Amount.String(),
+			Status: budgetStatus.Name(),
+		})
+	}
+
+	var err error
+	rpcProposal.Recipient, err = proposalState.Proposal.Recipient.ToAddress()
+	if err != nil {
+		return ResponsePack(InternalError, "invalidate Recipient")
+	}
+	crVotes := make(map[string]string)
+	for k, v := range proposalState.CRVotes {
+		did, _ := k.ToAddress()
+		crVotes[did] = v.Name()
+	}
+	RpcProposalState := RpcProposalState{
+		Status:             proposalState.Status.String(),
+		Proposal:           rpcProposal,
+		ProposalHash:       ToReversedString(proposalHash),
+		TxHash:             ToReversedString(proposalState.TxHash),
+		CRVotes:            crVotes,
+		VotersRejectAmount: proposalState.VotersRejectAmount.String(),
+		RegisterHeight:     proposalState.RegisterHeight,
+		TrackingCount:      proposalState.TrackingCount,
+		TerminatedHeight:   proposalState.TerminatedHeight,
+		ProposalOwner:      hex.EncodeToString(proposalState.ProposalOwner),
+		AvailableAmount:    crCommittee.AvailableWithdrawalAmount(proposalHash).String(),
+	}
+	result := &RpcCRProposalStateInfo{ProposalState: RpcProposalState}
 	return ResponsePack(Success, result)
 }
 
@@ -2294,6 +2528,10 @@ func GetCRDepositCoin(param Params) map[string]interface{} {
 }
 
 func EstimateSmartFee(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.TransactionPermitted); rtn != nil {
+		return rtn
+	}
+
 	confirm, ok := param.Int("confirmations")
 	if !ok {
 		return ResponsePack(InvalidParams, "need a param called confirmations")
@@ -2319,6 +2557,10 @@ func GetFeeRate(count int, confirm int) int {
 }
 
 func DecodeRawTransaction(param Params) map[string]interface{} {
+	if rtn := checkRPCServiceLevel(config.WalletPermitted); rtn != nil {
+		return rtn
+	}
+
 	dataParam, ok := param.String("data")
 	if !ok {
 		return ResponsePack(InvalidParams, "need a parameter named data")
@@ -2385,9 +2627,97 @@ func getPayloadInfo(p Payload) PayloadInfo {
 		obj.OwnerPublicKey = common.BytesToHexString(object.OwnerPublicKey)
 		obj.Signature = common.BytesToHexString(object.Signature)
 		return obj
+	case *payload.InactiveArbitrators:
+		var arbitrators []string
+		for _, a := range object.Arbitrators {
+			arbitrators = append(arbitrators, common.BytesToHexString(a))
+		}
+		obj := new(InactiveArbitratorsInfo)
+		obj.Sponsor = common.BytesToHexString(object.Sponsor)
+		obj.Arbitrators = arbitrators
+		return obj
 	case *payload.ActivateProducer:
 		obj := new(ActivateProducerInfo)
 		obj.NodePublicKey = common.BytesToHexString(object.NodePublicKey)
+		obj.Signature = common.BytesToHexString(object.Signature)
+		return obj
+	case *payload.UpdateVersion:
+		obj := new(UpdateVersionInfo)
+		obj.StartHeight = object.StartHeight
+		obj.EndHeight = object.EndHeight
+		return obj
+	case *payload.CRInfo:
+		obj := new(CRInfo)
+		obj.Code = common.BytesToHexString(object.Code)
+		cid, _ := object.CID.ToAddress()
+		obj.CID = cid
+		did, _ := object.DID.ToAddress()
+		if object.DID.IsEqual(emptyHash) {
+			obj.DID = ""
+		} else {
+			obj.DID = did
+		}
+		obj.NickName = object.NickName
+		obj.Url = object.Url
+		obj.Location = object.Location
+		obj.Signature = common.BytesToHexString(object.Signature)
+		return obj
+	case *payload.UnregisterCR:
+		obj := new(UnregisterCRInfo)
+		cid, _ := object.CID.ToAddress()
+		obj.CID = cid
+		obj.Signature = common.BytesToHexString(object.Signature)
+		return obj
+	case *payload.CRCProposal:
+		var budgets []BudgetBaseInfo
+		for _, b := range object.Budgets {
+			budgets = append(budgets, BudgetBaseInfo{
+				Type:   b.Type.Name(),
+				Stage:  b.Stage,
+				Amount: b.Amount.String(),
+			})
+		}
+		obj := new(CRCProposalInfo)
+		obj.ProposalType = object.ProposalType.Name()
+		obj.CategoryData = object.CategoryData
+		obj.OwnerPublicKey = common.BytesToHexString(object.OwnerPublicKey)
+		obj.DraftHash = ToReversedString(object.DraftHash)
+		obj.Budgets = budgets
+		addr, _ := object.Recipient.ToAddress()
+		obj.Recipient = addr
+		obj.Signature = common.BytesToHexString(object.Signature)
+		crmdid, _ := object.CRCouncilMemberDID.ToAddress()
+		obj.CRCouncilMemberDID = crmdid
+		obj.CRCouncilMemberSignature = common.BytesToHexString(object.CRCouncilMemberSignature)
+		obj.Hash = ToReversedString(object.Hash())
+		return obj
+	case *payload.CRCProposalReview:
+		obj := new(CRCProposalReviewInfo)
+		obj.ProposalHash = ToReversedString(object.ProposalHash)
+		obj.VoteResult = object.VoteResult.Name()
+		obj.OpinionHash = object.OpinionHash.String()
+		did, _ := object.DID.ToAddress()
+		obj.DID = did
+		obj.Sign = common.BytesToHexString(object.Signature)
+		return obj
+	case *payload.CRCProposalTracking:
+		obj := new(CRCProposalTrackingInfo)
+		obj.ProposalTrackingType = object.ProposalTrackingType.Name()
+		obj.ProposalHash = ToReversedString(object.ProposalHash)
+		obj.MessageHash = object.MessageHash.String()
+		obj.Stage = object.Stage
+		obj.OwnerPublicKey = common.BytesToHexString(object.OwnerPublicKey)
+		obj.NewOwnerPublicKey = common.BytesToHexString(object.NewOwnerPublicKey)
+		obj.OwnerSignature = common.BytesToHexString(object.OwnerSignature)
+		obj.NewOwnerPublicKey = common.BytesToHexString(object.NewOwnerPublicKey)
+		obj.SecretaryGeneralOpinionHash = object.SecretaryGeneralOpinionHash.String()
+		obj.SecretaryGeneralSignature = common.BytesToHexString(object.SecretaryGeneralSignature)
+		obj.NewOwnerSignature = common.BytesToHexString(object.NewOwnerSignature)
+		return obj
+	case *payload.CRCProposalWithdraw:
+		obj := new(CRCProposalWithdrawInfo)
+		obj.ProposalHash = ToReversedString(object.ProposalHash)
+		obj.OwnerPublicKey = common.BytesToHexString(object.OwnerPublicKey)
 		obj.Signature = common.BytesToHexString(object.Signature)
 		return obj
 	}
@@ -2415,6 +2745,25 @@ func getOutputPayloadInfo(op OutputPayload) OutputPayloadInfo {
 						})
 				}
 			case outputpayload.CRC:
+				for _, cv := range content.CandidateVotes {
+					c, _ := common.Uint168FromBytes(cv.Candidate)
+					addr, _ := c.ToAddress()
+					contentInfo.CandidatesInfo = append(contentInfo.CandidatesInfo,
+						CandidateVotes{
+							Candidate: addr,
+							Votes:     cv.Votes.String(),
+						})
+				}
+			case outputpayload.CRCProposal:
+				for _, cv := range content.CandidateVotes {
+					c, _ := common.Uint256FromBytes(cv.Candidate)
+					contentInfo.CandidatesInfo = append(contentInfo.CandidatesInfo,
+						CandidateVotes{
+							Candidate: ToReversedString(*c),
+							Votes:     cv.Votes.String(),
+						})
+				}
+			case outputpayload.CRCImpeachment:
 				for _, cv := range content.CandidateVotes {
 					c, _ := common.Uint168FromBytes(cv.Candidate)
 					addr, _ := c.ToAddress()
