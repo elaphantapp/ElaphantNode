@@ -208,7 +208,10 @@ func doProcessVote(block *Block, voteTxHolder *map[string]TxType, db *sql.Tx) er
 							votetypeStr = "Delegate"
 						} else if votetype == 0x01 {
 							votetypeStr = "CRC"
+						} else {
+							continue
 						}
+
 						for _, candidate := range cv.CandidateVotes {
 							if voteVersion == outputpayload.VoteProducerAndCRVersion {
 								value = candidate.Votes.String()
