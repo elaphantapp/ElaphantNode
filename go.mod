@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/btcsuite/btcd v0.20.1-beta // indirect
 	github.com/didip/tollbooth v4.0.2+incompatible
-	github.com/elastos/Elastos.ELA v0.5.0
+	github.com/elastos/Elastos.ELA v0.5.1
 	github.com/elastos/Elastos.ELA.SideChain.ID v0.0.0-20190603025656-34f49ac01d85
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gorilla/websocket v1.4.1
