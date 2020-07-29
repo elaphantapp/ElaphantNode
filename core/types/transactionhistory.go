@@ -29,6 +29,29 @@ var TxTypeEnum = map[TxType]string{
 	Vote:                    "Vote",
 	Crc:                     "Crc",
 	VoteAndCrc:              "VoteAndCrc",
+	RegisterProducer:        "RegisterProducer",
+	CancelProducer:          "CancelProducer",
+	UpdateProducer:          "UpdateProducer",
+	ReturnDepositCoin:       "ReturnDepositCoin",
+	ActivateProducer:        "ActivateProducer",
+
+	IllegalProposalEvidence:  "IllegalProposalEvidence",
+	IllegalVoteEvidence:      "IllegalVoteEvidence",
+	IllegalBlockEvidence:     "IllegalBlockEvidence",
+	IllegalSidechainEvidence: "IllegalSidechainEvidence",
+	InactiveArbitrators:      "InactiveArbitrators",
+	UpdateVersion:            "UpdateVersion",
+
+	RegisterCR:          "RegisterCR",
+	UnregisterCR:        "UnregisterCR",
+	UpdateCR:            "UpdateCR",
+	ReturnCRDepositCoin: "ReturnCRDepositCoin",
+
+	CRCProposal:         "CRCProposal",
+	CRCProposalReview:   "CRCProposalReview",
+	CRCProposalTracking: "CRCProposalTracking",
+	CRCAppropriation:    "CRCAppropriation",
+	CRCProposalWithdraw: "CRCProposalWithdraw",
 }
 
 type TransactionHistory struct {
