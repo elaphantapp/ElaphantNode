@@ -72,7 +72,7 @@ func GetTransactionInfo(tx *Transaction) *TransactionInfo {
 		inputs[i].Sequence = v.Sequence
 	}
 
-	outputs := make([]OutputInfo, len(tx.Outputs))
+	outputs := make([]RpcOutputInfo, len(tx.Outputs))
 	for i, v := range tx.Outputs {
 		outputs[i].Value = v.Value.String()
 		outputs[i].Index = uint32(i)
@@ -397,7 +397,7 @@ func GetArbitersInfo(params Params) map[string]interface{} {
 			Arbiters.GetArbitersCount() - dutyIndex,
 	}
 	for _, v := range Arbiters.GetArbitrators() {
-		result.Arbiters = append(result.Arbiters, common.BytesToHexString(v))
+		result.Arbiters = append(result.Arbiters, common.BytesToHexString(v.NodePublicKey))
 	}
 	for _, v := range Arbiters.GetCandidates() {
 		result.Candidates = append(result.Candidates, common.BytesToHexString(v))
@@ -883,10 +883,18 @@ func GetArbitratorGroupByHeight(param Params) map[string]interface{} {
 	if block == nil {
 		return ResponsePack(InternalError, "not found block at given height")
 	}
+	crcArbiters := Arbiters.GetCRCArbiters()
+	sort.Slice(crcArbiters, func(i, j int) bool {
+		return bytes.Compare(crcArbiters[i].NodePublicKey, crcArbiters[j].NodePublicKey) < 0
+	})
 
 	var arbitrators []string
-	for _, data := range Arbiters.GetArbitrators() {
-		arbitrators = append(arbitrators, common.BytesToHexString(data))
+	for _, a := range crcArbiters {
+		if !a.IsNormal {
+			arbitrators = append(arbitrators, "")
+		} else {
+			arbitrators = append(arbitrators, common.BytesToHexString(a.NodePublicKey))
+		}
 	}
 
 	result := ArbitratorGroupInfo{
@@ -2487,16 +2495,17 @@ func GetDepositCoin(param Params) map[string]interface{} {
 
 func GetCRDepositCoin(param Params) map[string]interface{} {
 	crCommittee := Chain.GetCRCommittee()
-	var availableDepositAmount common.Fixed64
-	var penaltyAmount common.Fixed64
+	var availableDepositAmount, penaltyAmount, depositAmount, totalAmount common.Fixed64
 	pubkey, hasPubkey := param.String("publickey")
 	if hasPubkey {
-		available, penalty, err := crCommittee.GetDepositAmountByPublicKey(pubkey)
+		available, penalty, deposit, total, err := crCommittee.GetDepositAmountByPublicKey(pubkey)
 		if err != nil {
 			return ResponsePack(InvalidParams, err.Error())
 		}
 		availableDepositAmount = available
 		penaltyAmount = penalty
+		depositAmount = deposit
+		totalAmount = total
 	}
 	id, hasID := param.String("id")
 	if hasID {
@@ -2504,12 +2513,14 @@ func GetCRDepositCoin(param Params) map[string]interface{} {
 		if err != nil {
 			return ResponsePack(InvalidParams, "invalid id to programHash")
 		}
-		available, penalty, err := crCommittee.GetDepositAmountByID(*programHash)
+		available, penalty, deposit, total, err := crCommittee.GetDepositAmountByID(*programHash)
 		if err != nil {
 			return ResponsePack(InvalidParams, err.Error())
 		}
 		availableDepositAmount = available
 		penaltyAmount = penalty
+		depositAmount = deposit
+		totalAmount = total
 	}
 
 	if !hasPubkey && !hasID {
@@ -2520,10 +2531,14 @@ func GetCRDepositCoin(param Params) map[string]interface{} {
 	type depositCoin struct {
 		Available string `json:"available"`
 		Deducted  string `json:"deducted"`
+		Deposit   string `json:"deposit"`
+		Assets    string `json:"assets"`
 	}
 	return ResponsePack(Success, &depositCoin{
 		Available: availableDepositAmount.String(),
 		Deducted:  penaltyAmount.String(),
+		Deposit:   depositAmount.String(),
+		Assets:    totalAmount.String(),
 	})
 }
 

@@ -54,6 +54,9 @@ const (
 
 	// checkpointPath indicates the path storing the checkpoint data
 	checkpointPath = "checkpoints"
+
+	// nodePrefix indicates the prefix of node version.
+	nodePrefix = "elaphant-"
 )
 
 var (
@@ -196,7 +199,9 @@ func startNode(c *cli.Context, st *settings.Settings) {
 				amount += utxo.Value
 			}
 			return amount, nil
-		})
+		},
+		committee.TryUpdateCRMemberInactivity,
+		committee.TryRevertCRMemberInactivity)
 	if err != nil {
 		printErrorAndExit(err)
 	}
@@ -255,7 +260,7 @@ func startNode(c *cli.Context, st *settings.Settings) {
 		TxMemPool:      txMemPool,
 		BlockMemPool:   blockMemPool,
 		Routes:         route,
-	})
+	}, nodePrefix+Version)
 	if err != nil {
 		printErrorAndExit(err)
 	}
