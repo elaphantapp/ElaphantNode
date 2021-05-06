@@ -44,6 +44,7 @@ const (
 	UnknownTransaction   ServerErrCode = 44001
 	UnknownAsset         ServerErrCode = 44002
 	UnknownBlock         ServerErrCode = 44003
+	UnknownConfirm       ServerErrCode = 44004
 	InternalError        ServerErrCode = 45002
 )
 
@@ -61,6 +62,7 @@ var ErrMap = map[ServerErrCode]string{
 	UnknownTransaction:          "Unknown Transaction",
 	UnknownAsset:                "Unknown asset",
 	UnknownBlock:                "Unknown Block",
+	UnknownConfirm:              "Unknown Confirm",
 	InternalError:               "Internal error",
 	ErrUTXOLocked:               "Error utxo locked",
 	ErrSideChainPowConsensus:    "Error sidechain pow consensus",
