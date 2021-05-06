@@ -102,6 +102,7 @@ func setupNode() *cli.App {
 		cmdcom.WsPortFlag,
 		cmdcom.InstantBlockFlag,
 		cmdcom.RPCPortFlag,
+		cmdcom.RPCIpFlag,
 	}
 	app.Flags = append(app.Flags, appSettings.Flags()...)
 	app.Action = func(c *cli.Context) {
@@ -201,7 +202,9 @@ func startNode(c *cli.Context, st *settings.Settings) {
 			return amount, nil
 		},
 		committee.TryUpdateCRMemberInactivity,
-		committee.TryRevertCRMemberInactivity)
+		committee.TryRevertCRMemberInactivity,
+		committee.TryUpdateCRMemberIllegal,
+		committee.TryRevertCRMemberIllegal)
 	if err != nil {
 		printErrorAndExit(err)
 	}
@@ -229,7 +232,7 @@ func startNode(c *cli.Context, st *settings.Settings) {
 
 	ledger.Blockchain = chain // fixme
 	blockMemPool.Chain = chain
-	arbiters.RegisterFunction(chain.GetHeight,
+	arbiters.RegisterFunction(chain.GetHeight, chain.GetBestBlockHash,
 		func(height uint32) (*types.Block, error) {
 			hash, err := chain.GetBlockHash(height)
 			if err != nil {
@@ -273,6 +276,8 @@ func startNode(c *cli.Context, st *settings.Settings) {
 		GetUTXO:                          chainStore.GetFFLDB().GetUTXO,
 		GetHeight:                        chainStore.GetHeight,
 		CreateCRAppropriationTransaction: chain.CreateCRCAppropriationTransaction,
+		CreateCRAssetsRectifyTransaction: chain.CreateCRAssetsRectifyTransaction,
+		CreateCRRealWithdrawTransaction:  chain.CreateCRRealWithdrawTransaction,
 		IsCurrent:                        server.IsCurrent,
 		Broadcast: func(msg p2p.Message) {
 			server.BroadcastMessage(msg)
@@ -286,6 +291,7 @@ func startNode(c *cli.Context, st *settings.Settings) {
 			st.Config().MaxPerLogSize, st.Config().MaxLogsSize)
 		arbitrator, err = dpos.NewArbitrator(act, dpos.Config{
 			EnableEventLog: true,
+			Chain:          chain,
 			ChainParams:    st.Params(),
 			Arbitrators:    arbiters,
 			Server:         server,
@@ -363,6 +369,7 @@ func startNode(c *cli.Context, st *settings.Settings) {
 		log.Info("Start POW Services")
 		go servers.Pow.Start()
 	}
+	servers.Pow.ListenForRevert()
 
 	st.Params().CkpManager.SetNeedSave(true)
 
