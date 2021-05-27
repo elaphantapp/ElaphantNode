@@ -4044,13 +4044,13 @@ func CrCandidateRankByHeight(param Params) map[string]interface{} {
 chain_cr_candidate_info b left join 
 (select A.did , cast(ROUND(sum(value),8) as text) as value from chain_vote_cr_info A where (A.cancel_height > `+height+` or
 cancel_height is null) and height <= `+height+` group by did) a on a.did = b.did
-order by value * 100000000 desc) m `, types.Vote_cr_info{})
+order by votes * 100000000 desc) m `, types.Vote_cr_info{})
 	} else {
 		rst, err = blockchain2.DBA.ToStruct(`select m.* from (select ifnull(a.did,b.did) as did , ifnull(a.value,0) as value , b.* from
 chain_cr_candidate_info b left join 
 (select A.did , cast(ROUND(sum(value),8) as text) as value from chain_vote_cr_info A where (A.cancel_height > `+height+` or
 cancel_height is null) and height <= `+height+` group by did) a on a.did = b.did where b.state = '`+strings.ToUpper(state[:1])+state[1:]+`'
-order by value * 100000000  desc) m `, types.Vote_cr_info{})
+order by votes * 100000000  desc) m `, types.Vote_cr_info{})
 	}
 	if err != nil {
 		return ResponsePackEx(ELEPHANT_INTERNAL_ERROR, " internal error : "+err.Error())
@@ -4059,6 +4059,7 @@ order by value * 100000000  desc) m `, types.Vote_cr_info{})
 	for i, r := range rst {
 		vi := r.(*types.Vote_cr_info)
 		vi.Rank = int64(i + 1)
+		vi.Value = vi.Votes
 	}
 
 	return ResponsePackEx(ELEPHANT_SUCCESS, rst)
